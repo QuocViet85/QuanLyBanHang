@@ -1,0 +1,17 @@
+@model ProductVM
+
+<h1>Create Product</h1>
+
+<form method="POST" asp-area="Product" asp-controller="Product" asp-action="Create">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div>
+        <label asp-for="Name"></label>
+        <input asp-for="Name">
+        <span asp-validation-for="Name"></span>
+    </div>
+
+    <button type="submit">Tạo sản phẩm</button>
+</form>
+
+

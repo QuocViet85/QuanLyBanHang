@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using WebBanHang.Areas.Product.Model;
 
-namespace WebBanHang.Order.Model;
+namespace WebBanHang.Areas.Order.Model;
 
 [Table("OrderProduct")]
 public class OrderProductModel

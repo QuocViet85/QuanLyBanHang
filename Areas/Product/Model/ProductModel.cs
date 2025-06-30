@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
 using WebBanHang.Areas.Category.Model;
 using WebBanHang.Areas.DynamicAttribute.Model;
-using WebBanHang.Order.Model;
+using WebBanHang.Areas.Order.Model;
 
 namespace WebBanHang.Areas.Product.Model;
 
@@ -14,9 +14,8 @@ public class ProductModel
     public int Id { set; get; }
 
     public string Name { set; get; }
-    public string Description { set; get; }
+    public string? Description { set; get; }
     public int Quantity { set; get; }
-    public string Content { set; get; }
     public bool IsActive { set; get; } = true;
     public string UserId { set; get; }
     public double Price {set; get;}

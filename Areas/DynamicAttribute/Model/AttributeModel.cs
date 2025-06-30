@@ -9,7 +9,8 @@ public class AttributeModel
 {
     [Key]
     public int Id {set; get;}
-    public string UserId {set; get;}
+    public string Name { set; get; }
+    public string UserId { set; get; }
 
     [ForeignKey("UserId")]
     public IdentityUser User {set; get;}

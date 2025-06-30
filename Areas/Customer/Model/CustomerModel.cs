@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
-using WebBanHang.Order.Model;
+using WebBanHang.Areas.Order.Model;
 
 namespace WebBanHang.Customer.Model;
 
