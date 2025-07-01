@@ -540,10 +540,11 @@ namespace WebBanHang.Migrations
             modelBuilder.Entity("WebBanHang.Areas.Category.Model.CategoryModel", b =>
                 {
                     b.HasOne("WebBanHang.Areas.Category.Model.CategoryModel", "ParentCategory")
-                        .WithMany()
+                        .WithMany("ChildCategories")
                         .HasForeignKey("ParentCategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired()
+                        .HasConstraintName("FK_CategoryParent_CategoryChild");
 
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
                         .WithMany()
@@ -565,10 +566,11 @@ namespace WebBanHang.Migrations
                         .IsRequired();
 
                     b.HasOne("WebBanHang.Areas.Product.Model.ProductModel", "Product")
-                        .WithMany("ProductCategories")
+                        .WithMany("CategoryProducts")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired()
+                        .HasConstraintName("FK_Category_Product");
 
                     b.Navigation("Category");
 
@@ -597,8 +599,9 @@ namespace WebBanHang.Migrations
                     b.HasOne("WebBanHang.Areas.Product.Model.ProductModel", "Product")
                         .WithMany("AttributeProducts")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired()
+                        .HasConstraintName("FK_Attribute_Product");
 
                     b.Navigation("Attribute");
 
@@ -679,6 +682,8 @@ namespace WebBanHang.Migrations
 
             modelBuilder.Entity("WebBanHang.Areas.Category.Model.CategoryModel", b =>
                 {
+                    b.Navigation("ChildCategories");
+
                     b.Navigation("ProductCategories");
                 });
 
@@ -696,9 +701,9 @@ namespace WebBanHang.Migrations
                 {
                     b.Navigation("AttributeProducts");
 
-                    b.Navigation("OrderProducts");
+                    b.Navigation("CategoryProducts");
 
-                    b.Navigation("ProductCategories");
+                    b.Navigation("OrderProducts");
 
                     b.Navigation("ProductPhotos");
                 });

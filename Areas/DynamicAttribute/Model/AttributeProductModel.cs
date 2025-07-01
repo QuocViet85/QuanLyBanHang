@@ -8,8 +8,6 @@ public class AttributeProductModel
 {
     public int ProductId { set; get; }
     public int AttributeId { set; get; }
-
-    [ForeignKey("ProductId")]
     public ProductModel Product { set; get; }
 
     [ForeignKey("AttributeId")]

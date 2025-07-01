@@ -23,16 +23,37 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
         builder.Entity<CategoryProductModel>(entity =>
         {
             entity.HasKey(ct => new { ct.ProductId, ct.CategoryId });
+
+            entity.HasOne(cp => cp.Product) //chỉ ra đối tượng có mqh 1 nhiều với bảng này trên bảng này
+                .WithMany(p => p.CategoryProducts) //chỉ ra đối tượng là bảng này trên bảng có mối quan hệ 1 nhiều với bảng này
+                .HasForeignKey(cp => cp.ProductId)
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasConstraintName("FK_Category_Product");
         });
 
         builder.Entity<AttributeProductModel>(entity =>
         {
             entity.HasKey(ap => new { ap.ProductId, ap.AttributeId });
+
+            entity.HasOne(ap => ap.Product) //chỉ ra đối tượng có mqh 1 nhiều với bảng này trên bảng này
+                .WithMany(p => p.AttributeProducts) //chỉ ra đối tượng là bảng này trên bảng có mối quan hệ 1 nhiều với bảng này
+                .HasForeignKey(ap => ap.ProductId)
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasConstraintName("FK_Attribute_Product");
         });
-        
+
         builder.Entity<OrderProductModel>(entity =>
         {
-            entity.HasKey(op => new { op.ProductId, op.OrderId});
+            entity.HasKey(op => new { op.ProductId, op.OrderId });
+        });
+
+        builder.Entity<CategoryModel>(entity =>
+        {
+            entity.HasOne(c => c.ParentCategory) //chỉ ra đối tượng có mqh 1 nhiều với bảng này trên bảng này
+                .WithMany(pc => pc.ChildCategories) //chỉ ra đối tượng là bảng này trên bảng có mối quan hệ 1 nhiều với bảng này
+                .HasForeignKey("ParentCategoryId")
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasConstraintName("FK_CategoryParent_CategoryChild");
         });
     }
 

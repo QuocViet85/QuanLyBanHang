@@ -27,7 +27,7 @@ public class ProductModel
     public DateTime CreatedAt { set; get; }
     public DateTime UpdatedAt { set; get; }
 
-    public List<CategoryProductModel>? ProductCategories { set; get; }
+    public List<CategoryProductModel>? CategoryProducts { set; get; }
     public List<AttributeProductModel>? AttributeProducts { set; get; }
     public List<ProductPhotoModel>? ProductPhotos { set; get; }
     public List<OrderProductModel>? OrderProducts { set; get; }

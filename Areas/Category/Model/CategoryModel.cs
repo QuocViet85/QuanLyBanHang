@@ -17,6 +17,7 @@ public class CategoryModel
 
     [ForeignKey("UserId")]
     public IdentityUser User { set; get; }
+    public List<CategoryModel> ChildCategories { set; get; }
     public List<CategoryProductModel>? ProductCategories { set; get; }
     public DateTime CreatedAt { set; get; }
     public DateTime UpdatedAt { set; get; }

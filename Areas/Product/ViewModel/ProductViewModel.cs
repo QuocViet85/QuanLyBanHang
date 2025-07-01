@@ -16,6 +16,9 @@ public class ProductVM
 
     [Display(Name = "Đang bán")]
     public bool IsActive { set; get; } = true;
+    
+    [Display(Name = "Giá")]
+    public double Price { set; get; }
 
     [Display(Name = "Giảm giá")]
     public double Discount { set; get; }
