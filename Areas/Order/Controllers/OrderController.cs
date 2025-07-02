@@ -78,7 +78,7 @@ public class OrderController : Controller
         var orderVMUpdate = new OrderVM()
         {
             CustomerName = orderUpdate.CustomerName,
-            Completed = orderUpdate.Completed
+            Completed = orderUpdate.Completed,
         };
 
         return View(orderVMUpdate);

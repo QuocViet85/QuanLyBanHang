@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebBanHang.Areas.DynamicAttribute.Model;
 
-[Table("DynamicAttributeValue")]
+[Table("DynamicAttributeValues")]
 public class AttributeValueModel 
 {   
     [Key]

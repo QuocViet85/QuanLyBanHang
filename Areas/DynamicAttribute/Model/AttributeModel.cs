@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace WebBanHang.Areas.DynamicAttribute.Model;
 
-[Table("DynamicAttribute")]
+[Table("DynamicAttributes")]
 public class AttributeModel 
 {
     [Key]

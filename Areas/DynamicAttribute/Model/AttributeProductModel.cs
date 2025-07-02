@@ -3,7 +3,7 @@ using WebBanHang.Areas.Product.Model;
 
 namespace WebBanHang.Areas.DynamicAttribute.Model;
 
-[Table("AttributeProduct")]
+[Table("AttributeProducts")]
 public class AttributeProductModel
 {
     public int ProductId { set; get; }

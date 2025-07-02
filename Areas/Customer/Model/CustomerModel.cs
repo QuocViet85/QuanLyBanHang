@@ -4,7 +4,7 @@ using WebBanHang.Areas.Order.Model;
 
 namespace WebBanHang.Areas.Customer.Model;
 
-[Table("Customer")]
+[Table("Customers")]
 public class CustomerModel
 {
     public int Id {set; get;}

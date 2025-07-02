@@ -4,7 +4,7 @@ using WebBanHang.Areas.Product.Model;
 
 namespace WebBanHang.Areas.Category.Model;
 
-[Table("CategoryProduct")]
+[Table("CategoryProducts")]
 public class CategoryProductModel
 {
     public int ProductId { set; get; }

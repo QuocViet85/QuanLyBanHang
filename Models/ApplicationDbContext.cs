@@ -42,24 +42,15 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
                 .HasConstraintName("FK_Attribute_Product");
         });
 
-        builder.Entity<OrderModel>(entity =>
-        {
-            entity.HasOne(o => o.Customer) //chỉ ra đối tượng có mqh 1 nhiều với bảng này trên bảng này
-                .WithMany(c => c.Orders) //chỉ ra đối tượng là bảng này trên bảng có mối quan hệ 1 nhiều với bảng này
-                .HasForeignKey(o => o.CustomerId)
-                .OnDelete(DeleteBehavior.NoAction)
-                .HasConstraintName("FK_Order_Customer");
-
-                entity.HasOne(o => o.User) //chỉ ra đối tượng có mqh 1 nhiều với bảng này trên bảng này
-                .WithMany("AspNetUsers") //chỉ ra đối tượng là bảng này trên bảng có mối quan hệ 1 nhiều với bảng này
-                .HasForeignKey(o => o.UserId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK_Order_Customer");
-        });
-
         builder.Entity<OrderProductModel>(entity =>
         {
             entity.HasKey(op => new { op.ProductId, op.OrderId });
+
+            entity.HasOne(op => op.Product) //chỉ ra đối tượng có mqh 1 nhiều với bảng này trên bảng này
+                .WithMany(p => p.OrderProducts) //chỉ ra đối tượng là bảng này trên bảng có mối quan hệ 1 nhiều với bảng này
+                .HasForeignKey(op => op.ProductId)
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasConstraintName("FK_Order_Product");
         });
     }
 

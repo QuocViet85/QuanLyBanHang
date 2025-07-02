@@ -1,5 +1,7 @@
 @model ProductVM
-
+@{
+    List<CategoryModel> categories = ViewData["categories"] as List<CategoryModel>;
+}
 <h1>Create Product</h1>
 
 <form method="POST" asp-area="Product" asp-controller="Product" asp-action="Create">
@@ -28,7 +30,6 @@
         <input asp-for="Quantity">
         <span asp-validation-for="Quantity"></span>
     </div>
-
     <div>
         <label asp-for="IsActive"></label>
         <input asp-for="IsActive">
@@ -39,6 +40,15 @@
         <label asp-for="Discount"></label>
         <input asp-for="Discount">
         <span asp-validation-for="Discount"></span>
+    </div>
+
+    <div>
+        @foreach (var category in categories) {
+            <label>
+                <input type="checkbox" name="CategoryIds" value="@category.Id"> @category.Name
+            </label>
+            
+        }
     </div>
 
 

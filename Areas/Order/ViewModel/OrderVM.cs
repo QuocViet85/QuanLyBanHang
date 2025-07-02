@@ -12,7 +12,7 @@ public class OrderVM
 
     [Display(Name = "Hoàn thành")]
     public bool Completed { set; get; }
-    public List<ProductInOrder> ProductInOrders { set; get; }
+    public List<ProductInOrder>? ProductInOrders { set; get; }
 }
 
 public class ProductInOrder

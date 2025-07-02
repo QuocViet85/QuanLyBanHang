@@ -1,4 +1,8 @@
 @model ProductVM
+@{
+    List<CategoryModel> categories = ViewData["categories"] as List<CategoryModel>;
+    List<CategoryProductModel> categoryProducts = ViewData["categoryProducts"] as List<CategoryProductModel>;
+}
 
 <h1>Update Product</h1>
 
@@ -39,6 +43,20 @@
         <label asp-for="Discount"></label>
         <input asp-for="Discount">
         <span asp-validation-for="Discount"></span>
+    </div>
+
+    <div></div>
+        @foreach (var category in categories) {
+            string check = null;
+            foreach (var categoryProduct in category.CategoryProducts) {
+                if (categoryProduct.ProductId == Model.Id) {
+                    check = "checked";
+                }
+            }
+            <label>
+                <input type="checkbox" name="CategoryIds" value="@category.Id" @check> @category.Name
+            </label>
+        }
     </div>
 
 

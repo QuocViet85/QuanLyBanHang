@@ -3,7 +3,7 @@ using WebBanHang.Areas.Product.Model;
 
 namespace WebBanHang.Areas.Order.Model;
 
-[Table("OrderProduct")]
+[Table("OrderProducts")]
 public class OrderProductModel
 {
     public int ProductId {set; get;}

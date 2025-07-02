@@ -12,8 +12,8 @@ using WebBanHang.Data;
 namespace WebBanHang.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250702043936_EditDatabase2")]
-    partial class EditDatabase2
+    [Migration("20250702083700_SetDb1")]
+    partial class SetDb1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -272,7 +272,7 @@ namespace WebBanHang.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("CategoryProduct");
+                    b.ToTable("CategoryProducts");
                 });
 
             modelBuilder.Entity("WebBanHang.Areas.Customer.Model.CustomerModel", b =>
@@ -304,7 +304,7 @@ namespace WebBanHang.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Customer");
+                    b.ToTable("Customers");
                 });
 
             modelBuilder.Entity("WebBanHang.Areas.DynamicAttribute.Model.AttributeModel", b =>
@@ -327,7 +327,7 @@ namespace WebBanHang.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("DynamicAttribute");
+                    b.ToTable("DynamicAttributes");
                 });
 
             modelBuilder.Entity("WebBanHang.Areas.DynamicAttribute.Model.AttributeProductModel", b =>
@@ -342,7 +342,7 @@ namespace WebBanHang.Migrations
 
                     b.HasIndex("AttributeId");
 
-                    b.ToTable("AttributeProduct");
+                    b.ToTable("AttributeProducts");
                 });
 
             modelBuilder.Entity("WebBanHang.Areas.DynamicAttribute.Model.AttributeValueModel", b =>
@@ -364,7 +364,7 @@ namespace WebBanHang.Migrations
 
                     b.HasIndex("AttributeId");
 
-                    b.ToTable("DynamicAttributeValue");
+                    b.ToTable("DynamicAttributeValues");
                 });
 
             modelBuilder.Entity("WebBanHang.Areas.Order.Model.OrderModel", b =>
@@ -403,7 +403,7 @@ namespace WebBanHang.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Order");
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("WebBanHang.Areas.Order.Model.OrderProductModel", b =>
@@ -421,7 +421,7 @@ namespace WebBanHang.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderProduct");
+                    b.ToTable("OrderProducts");
                 });
 
             modelBuilder.Entity("WebBanHang.Areas.Product.Model.ProductModel", b =>
@@ -487,7 +487,7 @@ namespace WebBanHang.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductPhoto");
+                    b.ToTable("ProductPhotos");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -629,9 +629,7 @@ namespace WebBanHang.Migrations
                 {
                     b.HasOne("WebBanHang.Areas.Customer.Model.CustomerModel", "Customer")
                         .WithMany("Orders")
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .HasConstraintName("FK_Order_Customer");
+                        .HasForeignKey("CustomerId");
 
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
                         .WithMany()
@@ -655,8 +653,9 @@ namespace WebBanHang.Migrations
                     b.HasOne("WebBanHang.Areas.Product.Model.ProductModel", "Product")
                         .WithMany("OrderProducts")
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired()
+                        .HasConstraintName("FK_Order_Product");
 
                     b.Navigation("Order");
 

@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebBanHang.Areas.Product.Model;
 
-[Table("ProductPhoto")]
+[Table("ProductPhotos")]
 public class ProductPhotoModel
 {
     [Key]

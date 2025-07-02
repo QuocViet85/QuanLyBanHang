@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebBanHang.Areas.Category.Model;
 using WebBanHang.Areas.Product.Model;
 using WebBanHang.Areas.Product.ViewModel;
 using WebBanHang.Data;
@@ -39,8 +40,10 @@ public class ProductController : Controller
     }
 
     [HttpGet("create")]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
+        var categories = await GetCategories();
+        ViewData["categories"] = categories;
         return View();
     }
 
@@ -66,10 +69,33 @@ public class ProductController : Controller
 
             await _dbContext.Products.AddAsync(productModel);
             await _dbContext.SaveChangesAsync();
-
-            return RedirectToAction("Create");
+            await SetCategoryProducts(productModel.Id, productVM.CategoryIds);
         }
-        return View();
+       return RedirectToAction("Create");
+    }
+
+    private async Task<List<CategoryModel>> GetCategories()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        var categories = await _dbContext.Categories.Include(c => c.CategoryProducts).Where(c => c.UserId == user.Id).ToListAsync();
+
+        return categories;
+    }
+
+    private async Task SetCategoryProducts(int productId, List<int> categoryIds)
+    {
+        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM CategoryProducts WHERE ProductId = {0}", productId);
+        foreach (var categoryId in categoryIds)
+        {
+            var categoryProduct = new CategoryProductModel()
+            {
+                ProductId = productId,
+                CategoryId = categoryId
+            };
+
+            _dbContext.CategoryProducts.Add(categoryProduct);
+        }
+        await _dbContext.SaveChangesAsync();
     }
 
     [HttpGet("update/{id}")]
@@ -81,6 +107,7 @@ public class ProductController : Controller
 
         var productVMUpdate = new ProductVM()
         {
+            Id = productUpdate.Id,
             Name = productUpdate.Name,
             Description = productUpdate.Description,
             Quantity = productUpdate.Quantity,
@@ -88,6 +115,9 @@ public class ProductController : Controller
             Price = productUpdate.Price,
             Discount = productUpdate.Discount,
         };
+
+        var categories = await GetCategories();
+        ViewData["categories"] = categories;
 
         return View(productVMUpdate);
     }
@@ -113,15 +143,12 @@ public class ProductController : Controller
 
                 _dbContext.Products.Update(productUpdate);
                 int result = await _dbContext.SaveChangesAsync();
-
-                return RedirectToAction("Update", new { id = id });
             }
-            return Redirect("Index");
+            await SetCategoryProducts(productUpdate.Id, productVM.CategoryIds);
         }
-        catch
-        {
-            return Redirect("Index");
-        } 
+        catch {} 
+             return RedirectToAction("Update", new { id = id });
+
     }
     
     [HttpGet("delete/{id}")]
