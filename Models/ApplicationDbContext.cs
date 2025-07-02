@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using WebBanHang.Areas.Category.Model;
 using WebBanHang.Areas.DynamicAttribute.Model;
 using WebBanHang.Areas.Product.Model;
-using WebBanHang.Customer.Model;
+using WebBanHang.Areas.Customer.Model;
 using WebBanHang.Areas.Order.Model;
 
 namespace WebBanHang.Data;
@@ -42,18 +42,24 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
                 .HasConstraintName("FK_Attribute_Product");
         });
 
+        builder.Entity<OrderModel>(entity =>
+        {
+            entity.HasOne(o => o.Customer) //chỉ ra đối tượng có mqh 1 nhiều với bảng này trên bảng này
+                .WithMany(c => c.Orders) //chỉ ra đối tượng là bảng này trên bảng có mối quan hệ 1 nhiều với bảng này
+                .HasForeignKey(o => o.CustomerId)
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasConstraintName("FK_Order_Customer");
+
+                entity.HasOne(o => o.User) //chỉ ra đối tượng có mqh 1 nhiều với bảng này trên bảng này
+                .WithMany("AspNetUsers") //chỉ ra đối tượng là bảng này trên bảng có mối quan hệ 1 nhiều với bảng này
+                .HasForeignKey(o => o.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .HasConstraintName("FK_Order_Customer");
+        });
+
         builder.Entity<OrderProductModel>(entity =>
         {
             entity.HasKey(op => new { op.ProductId, op.OrderId });
-        });
-
-        builder.Entity<CategoryModel>(entity =>
-        {
-            entity.HasOne(c => c.ParentCategory) //chỉ ra đối tượng có mqh 1 nhiều với bảng này trên bảng này
-                .WithMany(pc => pc.ChildCategories) //chỉ ra đối tượng là bảng này trên bảng có mối quan hệ 1 nhiều với bảng này
-                .HasForeignKey("ParentCategoryId")
-                .OnDelete(DeleteBehavior.NoAction)
-                .HasConstraintName("FK_CategoryParent_CategoryChild");
         });
     }
 

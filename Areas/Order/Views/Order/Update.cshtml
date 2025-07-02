@@ -1,0 +1,22 @@
+@model OrderVM
+
+<h1>Update Order</h1>
+
+<form method="POST" asp-area="Order" asp-controller="Order" asp-action="Update">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div>
+        <label asp-for="CustomerName"></label>
+        <input asp-for="CustomerName">
+        <span asp-validation-for="CustomerName"></span>
+    </div>
+
+    <div>
+        <label asp-for="Completed"></label>
+        <input asp-for="Completed">
+        <span asp-validation-for="Completed"></span>
+    </div>
+
+
+    <button type="submit">Cập nhật hóa đơn</button>
+</form>

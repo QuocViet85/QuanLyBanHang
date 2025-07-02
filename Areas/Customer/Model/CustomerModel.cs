@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
 using WebBanHang.Areas.Order.Model;
 
-namespace WebBanHang.Customer.Model;
+namespace WebBanHang.Areas.Customer.Model;
 
 [Table("Customer")]
 public class CustomerModel

@@ -1,0 +1,15 @@
+@model List<CategoryModel>
+<h1>Categories</h1>
+
+
+<a asp-area="Category" asp-controller="Category" asp-action="Create">create</a>
+
+<br>
+
+@foreach (var category in Model) {
+    <span>@category.Id - @category.Name</span> 
+    <a asp-area="category" asp-controller="category" asp-action="Detail" asp-route-id="@category.Id">Detail</a>
+    <a asp-area="category" asp-controller="category" asp-action="Update" asp-route-id="@category.Id">Update</a>  
+    <a asp-area="category" asp-controller="category" asp-action="Delete" asp-route-id="@category.Id">Delete</a>
+    <br>
+}

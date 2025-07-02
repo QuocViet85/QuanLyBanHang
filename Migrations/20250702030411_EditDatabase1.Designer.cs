@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebBanHang.Data;
 
@@ -11,9 +12,11 @@ using WebBanHang.Data;
 namespace WebBanHang.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250702030411_EditDatabase1")]
+    partial class EditDatabase1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -272,38 +275,6 @@ namespace WebBanHang.Migrations
                     b.ToTable("CategoryProduct");
                 });
 
-            modelBuilder.Entity("WebBanHang.Areas.Customer.Model.CustomerModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("PhoneNumber")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Customer");
-                });
-
             modelBuilder.Entity("WebBanHang.Areas.DynamicAttribute.Model.AttributeModel", b =>
                 {
                     b.Property<int>("Id")
@@ -390,15 +361,9 @@ namespace WebBanHang.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CustomerId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Order");
                 });
@@ -487,6 +452,38 @@ namespace WebBanHang.Migrations
                     b.ToTable("ProductPhoto");
                 });
 
+            modelBuilder.Entity("WebBanHang.Customer.Model.CustomerModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("PhoneNumber")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Customer");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -569,17 +566,6 @@ namespace WebBanHang.Migrations
                     b.Navigation("Product");
                 });
 
-            modelBuilder.Entity("WebBanHang.Areas.Customer.Model.CustomerModel", b =>
-                {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("WebBanHang.Areas.DynamicAttribute.Model.AttributeModel", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
@@ -624,21 +610,11 @@ namespace WebBanHang.Migrations
 
             modelBuilder.Entity("WebBanHang.Areas.Order.Model.OrderModel", b =>
                 {
-                    b.HasOne("WebBanHang.Areas.Customer.Model.CustomerModel", "Customer")
+                    b.HasOne("WebBanHang.Customer.Model.CustomerModel", "Customer")
                         .WithMany("Orders")
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .HasConstraintName("FK_Order_Customer");
-
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CustomerId");
 
                     b.Navigation("Customer");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("WebBanHang.Areas.Order.Model.OrderProductModel", b =>
@@ -682,14 +658,20 @@ namespace WebBanHang.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("WebBanHang.Customer.Model.CustomerModel", b =>
+                {
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("WebBanHang.Areas.Category.Model.CategoryModel", b =>
                 {
                     b.Navigation("CategoryProducts");
-                });
-
-            modelBuilder.Entity("WebBanHang.Areas.Customer.Model.CustomerModel", b =>
-                {
-                    b.Navigation("Orders");
                 });
 
             modelBuilder.Entity("WebBanHang.Areas.DynamicAttribute.Model.AttributeModel", b =>
@@ -711,6 +693,11 @@ namespace WebBanHang.Migrations
                     b.Navigation("OrderProducts");
 
                     b.Navigation("ProductPhotos");
+                });
+
+            modelBuilder.Entity("WebBanHang.Customer.Model.CustomerModel", b =>
+                {
+                    b.Navigation("Orders");
                 });
 #pragma warning restore 612, 618
         }

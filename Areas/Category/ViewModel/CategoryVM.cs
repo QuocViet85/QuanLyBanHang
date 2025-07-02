@@ -10,7 +10,4 @@ public class CategoryVM
 
     [Display(Name = "Mô tả")]
     public string Description { set; get; }
-
-    [Display(Name = "Chuyên mục cha")]
-    public int ParentCategoryId { set; get; }
 }

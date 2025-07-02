@@ -1,0 +1,18 @@
+@model AttributeVM
+
+<h1>Create Attribute</h1>
+
+<form method="POST" asp-area="DynamicAttribute" asp-controller="Attribute" asp-action="Create">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div>
+        <label asp-for="Name"></label>
+        <input asp-for="Name">
+        <span asp-validation-for="Name"></span>
+    </div>
+
+
+    <button type="submit">Tạo thuộc tính động</button>
+</form>
+
+

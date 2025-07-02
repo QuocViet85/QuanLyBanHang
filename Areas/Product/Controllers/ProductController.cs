@@ -5,7 +5,7 @@ using WebBanHang.Areas.Product.Model;
 using WebBanHang.Areas.Product.ViewModel;
 using WebBanHang.Data;
 
-namespace WebBanHang.Areas.Product;
+namespace WebBanHang.Areas.Product.Controllers;
 
 [Area("Product")]
 [Route("product")]

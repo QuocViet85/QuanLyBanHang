@@ -11,14 +11,11 @@ public class CategoryModel
     public int Id { set; get; }
     public string Name { set; get; }
     public string Description { set; get; }
-    public int ParentCategoryId { set; get; }
-    public CategoryModel ParentCategory { set; get; }
     public string UserId { set; get; }
 
     [ForeignKey("UserId")]
     public IdentityUser User { set; get; }
-    public List<CategoryModel> ChildCategories { set; get; }
-    public List<CategoryProductModel>? ProductCategories { set; get; }
+    public List<CategoryProductModel>? CategoryProducts { set; get; }
     public DateTime CreatedAt { set; get; }
     public DateTime UpdatedAt { set; get; }
 }

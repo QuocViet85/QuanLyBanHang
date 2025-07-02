@@ -1,0 +1,17 @@
+@model List<CustomerModel>
+<h1>customer</h1>
+
+
+<a asp-area="Customer" asp-controller="Customer" asp-action="Create">create</a>
+
+<br>
+
+@foreach (var customer in Model) {
+    <span>@customer.Id - @customer.Name</span> 
+    <a asp-area="customer" asp-controller="customer" asp-action="Detail" asp-route-id="@customer.Id">Detail</a>
+    <a asp-area="customer" asp-controller="customer" asp-action="Update" asp-route-id="@customer.Id">Update</a>  
+    <a asp-area="customer" asp-controller="customer" asp-action="Delete" asp-route-id="@customer.Id">Delete</a>
+    <br>
+}
+
+

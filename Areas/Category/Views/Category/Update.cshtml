@@ -1,0 +1,22 @@
+@model CategoryVM
+
+<h1>Update Category</h1>
+
+<form method="POST" asp-area="Category" asp-controller="Category" asp-action="Update">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div>
+        <label asp-for="Name"></label>
+        <input asp-for="Name">
+        <span asp-validation-for="Name"></span>
+    </div>
+
+    <div>
+        <label asp-for="Description"></label>
+        <input asp-for="Description">
+        <span asp-validation-for="Description"></span>
+    </div>
+
+
+    <button type="submit">Cập nhật chuyên mục</button>
+</form>
