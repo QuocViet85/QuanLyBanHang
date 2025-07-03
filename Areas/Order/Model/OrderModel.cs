@@ -11,6 +11,7 @@ public class OrderModel
 {
     [Key]
     public int Id { set; get; }
+    public string? Name { set; get; }
     public string? CustomerName { set; get; }
     public string UserId { set; get; }
 

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using WebBanHang.Areas.Order.ViewModel;
 using WebBanHang.Data;
 using WebBanHang.Areas.Order.Model;
+using WebBanHang.Areas.Customer.Model;
 
 namespace WebBanHang.Areas.Order.Controllers;
 
@@ -21,111 +22,207 @@ public class OrderController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var user = await _userManager.GetUserAsync(User);
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
 
-        var orders = await _dbContext.Orders.Where(o => o.UserId == user.Id).ToListAsync();
+            var orders = await _dbContext.Orders.Include(o => o.Customer).Where(o => o.UserId == user.Id).ToListAsync();
 
-        return View(orders);
+            List<OrderVM> orderVMs = new List<OrderVM>();
+
+            if (orderVMs.Count > 0)
+            {
+                orderVMs = orders.Select(p => GetOrderVMFromOrderModel(p)).ToList();
+            }
+
+            return View(orderVMs);
+        }
+        catch { }
+        return null;
     }
 
     [HttpGet("detail/{id}")]
     public async Task<IActionResult> Detail(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
 
-        var order = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id).FirstAsync();
+            var order = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
 
-        return View(order);
+            if (order != null)
+            {
+                var orderVM = GetOrderVMFromOrderModel(order);
+                return View(order);
+            }
+            return null;
+        }
+        catch { }
+
+        return null;
     }
 
     [HttpGet("create")]
-    public IActionResult Create()
+    public async Task<IActionResult> Create()
     {
-        return View();
+        try
+        {
+            ViewData["customers"] = await GetCustomers();
+            return View();
+        }
+        catch { }
+
+        return null;
     }
 
     [HttpPost("create")]
     public async Task<IActionResult> Create(OrderVM orderVM)
     {
-        if (ModelState.IsValid)
+        try
         {
-            var user = await _userManager.GetUserAsync(User);
-
-            var orderModel = new OrderModel()
+            if (ModelState.IsValid)
             {
-                CustomerName = orderVM.CustomerName,
-                Completed = orderVM.Completed,
-                UserId = user.Id,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            };
+                var user = await _userManager.GetUserAsync(User);
 
-            await _dbContext.Orders.AddAsync(orderModel);
-            await _dbContext.SaveChangesAsync();
+                var orderModel = new OrderModel()
+                {
+                    Name = string.IsNullOrEmpty(orderVM.Name) ? $"DH - {DateTime.Now}" : orderVM.Name,
+                    Completed = orderVM.Completed,
+                    UserId = user.Id,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
 
-            return RedirectToAction("Create");
+                if (orderVM.CustomerId != 0)
+                {
+                    var customer = await GetCustomerById((int)orderVM.CustomerId);
+                    if (customer != null)
+                    {
+                        orderModel.CustomerId = customer.Id;
+                    }
+                    else
+                    {
+                        orderModel.CustomerName = orderVM.CustomerName;
+                    }
+                }
+                else
+                {
+                    orderModel.CustomerName = orderVM.CustomerName;
+                }
+                await _dbContext.Orders.AddAsync(orderModel);
+                await _dbContext.SaveChangesAsync();
+            }
         }
-        return View();
+        catch { }
+
+        return RedirectToAction("Create");
     }
 
     [HttpGet("update/{id}")]
     public async Task<IActionResult> Update(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
-
-        var orderUpdate = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
-
-        var orderVMUpdate = new OrderVM()
-        {
-            CustomerName = orderUpdate.CustomerName,
-            Completed = orderUpdate.Completed,
-        };
-
-        return View(orderVMUpdate);
-    }
-
-    [HttpPost("update/{id}")]
-    public async Task<IActionResult> Update(int id, OrderVM OrderVM)
-    {
-        var user = await _userManager.GetUserAsync(User);
-
         try
         {
-            var orderUpdate = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id).FirstAsync();
+            var user = await _userManager.GetUserAsync(User);
+
+            var orderUpdate = await _dbContext.Orders.Include(o => o.Customer).Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
 
             if (orderUpdate != null)
             {
-                orderUpdate.CustomerName = OrderVM.CustomerName;
-                orderUpdate.Completed = OrderVM.Completed;
+                var orderVMUpdate = GetOrderVMFromOrderModel(orderUpdate);
+
+                if (orderUpdate.Customer != null) orderVMUpdate.CustomerId = orderUpdate.Customer.Id;
+
+                ViewData["customers"] = await GetCustomers();
+
+                return View(orderVMUpdate);
+            }
+        }
+        catch { }
+
+        return null;
+    }
+
+    [HttpPost("update/{id}")]
+    public async Task<IActionResult> Update(int id, OrderVM orderVM)
+    {
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var orderUpdate = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
+
+            if (orderUpdate != null)
+            {
+                orderUpdate.CustomerName = orderVM.CustomerName;
+                orderUpdate.Completed = orderVM.Completed;
                 orderUpdate.UpdatedAt = DateTime.Now;
+
+                if (orderVM.CustomerId != 0)
+                {
+                    var customer = await GetCustomerById((int)orderVM.CustomerId);
+                    if (customer != null)
+                    {
+                        orderUpdate.CustomerId = customer.Id;
+                    }
+                    else
+                    {
+                        orderUpdate.CustomerName = orderVM.CustomerName;
+                    }
+                }
+                else
+                {
+                    orderUpdate.CustomerName = orderVM.CustomerName;
+                }
 
                 _dbContext.Orders.Update(orderUpdate);
                 int result = await _dbContext.SaveChangesAsync();
 
                 return RedirectToAction("Update", new { id = id });
             }
-            return Redirect("Index");
         }
         catch
-        {
-            return Redirect("Index");
-        } 
+        { }
+        return RedirectToAction("Update", new { id = id });
     }
-    
+
     [HttpGet("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
         try
         {
-            OrderModel OrderDelete = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id).FirstAsync();
+            var user = await _userManager.GetUserAsync(User);
+            OrderModel OrderDelete = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
             if (OrderDelete != null)
             {
                 _dbContext.Orders.Remove(OrderDelete);
                 int result = await _dbContext.SaveChangesAsync();
-            }   
+            }
         }
-        catch{}
+        catch { }
         return RedirectToAction("Index");
+    }
+
+    private OrderVM GetOrderVMFromOrderModel(OrderModel order)
+    {
+        return new OrderVM()
+        {
+            Id = order.Id,
+            Name = order.Name,
+            CustomerName = order.CustomerName,
+            CustomerId = order.CustomerId,
+            Completed = order.Completed
+        };
+    }
+
+    private async Task<List<CustomerModel>> GetCustomers()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        return await _dbContext.Customers.Where(c => c.UserId == user.Id).ToListAsync();
+    }
+
+    private async Task<CustomerModel> GetCustomerById(int id)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        return await _dbContext.Customers.Where(c => c.UserId == user.Id && c.Id == id).FirstOrDefaultAsync();
     }
 }

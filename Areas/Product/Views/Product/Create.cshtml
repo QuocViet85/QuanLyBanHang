@@ -1,6 +1,7 @@
 @model ProductVM
 @{
     List<CategoryModel> categories = ViewData["categories"] as List<CategoryModel>;
+    List<AttributeModel> attributes = ViewData["attributes"] as List<AttributeModel>;
 }
 <h1>Create Product</h1>
 
@@ -30,6 +31,7 @@
         <input asp-for="Quantity">
         <span asp-validation-for="Quantity"></span>
     </div>
+
     <div>
         <label asp-for="IsActive"></label>
         <input asp-for="IsActive">
@@ -41,6 +43,13 @@
         <input asp-for="Discount">
         <span asp-validation-for="Discount"></span>
     </div>
+
+    @foreach (var atrr in attributes) {
+        <div>
+            <label>@atrr.Name</label>
+            <input name="DynamicAttributes[@atrr.Id]">
+        </div>
+    }
 
     <div>
         @foreach (var category in categories) {

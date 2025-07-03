@@ -79,9 +79,6 @@ namespace WebBanHang.Areas.Identity.Pages.Account
             [Display(Name = "Email")]
             public string Email { get; set; }
 
-            [Display(Name = "Tên người dùng")]
-            public string UserName {set; get;}
-
             /// <summary>
             ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
             ///     directly from your code. This API may change or be removed in future releases.
@@ -117,19 +114,14 @@ namespace WebBanHang.Areas.Identity.Pages.Account
             {
                 var user = CreateUser();
 
-                if (!string.IsNullOrEmpty(Input.UserName)) {
-                    await _userStore.SetUserNameAsync(user, Input.UserName, CancellationToken.None);
-                }else {
-                    await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-                }
-                
+                await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
                 await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
                 var result = await _userManager.CreateAsync(user, Input.Password);
 
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("User created a new account with password.");
-
+                    
                     var userId = await _userManager.GetUserIdAsync(user);
                     var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                     code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));

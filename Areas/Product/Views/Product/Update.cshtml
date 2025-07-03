@@ -1,7 +1,7 @@
 @model ProductVM
 @{
     List<CategoryModel> categories = ViewData["categories"] as List<CategoryModel>;
-    List<CategoryProductModel> categoryProducts = ViewData["categoryProducts"] as List<CategoryProductModel>;
+    List<AttributeModel> attributes = ViewData["attributes"] as List<AttributeModel>;
 }
 
 <h1>Update Product</h1>
@@ -44,6 +44,23 @@
         <input asp-for="Discount">
         <span asp-validation-for="Discount"></span>
     </div>
+
+    @foreach (var atrr in attributes) {
+        <div>
+            <label>@atrr.Name</label>
+            @if (@atrr.AttributeValues.Count > 0) {
+                foreach (var attributeValue in atrr.AttributeValues) {
+                    if (attributeValue.ProductId == Model.Id) {
+                        <input name="DynamicAttributes[@atrr.Id]" value="@attributeValue.Content">
+                    }else {
+                        <input name="DynamicAttributes[@atrr.Id]">
+                    }
+                }
+            }else {
+                <input name="DynamicAttributes[@atrr.Id]">
+            }
+        </div>
+    }
 
     <div></div>
         @foreach (var category in categories) {

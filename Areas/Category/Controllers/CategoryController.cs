@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
 using WebBanHang.Areas.Category.Model;
 using WebBanHang.Areas.Category.ViewModel;
 using WebBanHang.Data;
@@ -23,21 +22,43 @@ public class CategoryController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var user = await _userManager.GetUserAsync(User);
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
 
-        var categories = await _dbContext.Categories.Where(c => c.UserId == user.Id).ToListAsync();
+            var categories = await _dbContext.Categories.Where(c => c.UserId == user.Id).ToListAsync();
 
-        return View(categories);
+            List<CategoryVM> categoryVMs = new List<CategoryVM>();
+
+            if (categories.Count > 0)
+            {
+                categoryVMs = categories.Select(c => GetCategoryVMFromCategoryModel(c)).ToList();
+            }
+            return View(categoryVMs);
+        }
+        catch { }
+
+        return null;
     }
 
     [HttpGet("detail/{id}")]
     public async Task<IActionResult> Detail(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
 
-        var category = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == user.Id).FirstAsync();
+            var category = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
 
-        return View(category);
+            if (category != null)
+            {
+                var categoryVM = GetCategoryVMFromCategoryModel(category);
+                return View(categoryVM);
+            }
+        }
+        catch { }
+
+        return null;
     }
 
     [HttpGet("create")]
@@ -49,51 +70,56 @@ public class CategoryController : Controller
     [HttpPost("create")]
     public async Task<IActionResult> Create(CategoryVM categoryVM)
     {
-        if (ModelState.IsValid)
+        try
         {
-            var user = await _userManager.GetUserAsync(User);
-
-            var categoryModel = new CategoryModel()
+            if (ModelState.IsValid)
             {
-                Name = categoryVM.Name,
-                Description = categoryVM.Description,
-                UserId = user.Id,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            };
+                var user = await _userManager.GetUserAsync(User);
 
-            await _dbContext.Categories.AddAsync(categoryModel);
-            await _dbContext.SaveChangesAsync();
+                var categoryModel = new CategoryModel()
+                {
+                    Name = categoryVM.Name,
+                    Description = categoryVM.Description,
+                    UserId = user.Id,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
 
-            return RedirectToAction("Create");
+                await _dbContext.Categories.AddAsync(categoryModel);
+                await _dbContext.SaveChangesAsync();
+            }
         }
-        return View();
+        catch { }
+        return RedirectToAction("Create");
     }
 
     [HttpGet("update/{id}")]
     public async Task<IActionResult> Update(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
-
-        var categoryUpdate = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
-
-        var categoryVMUpdate = new CategoryVM()
+        try
         {
-            Name = categoryUpdate.Name,
-            Description = categoryUpdate.Description,
-        };
+            var user = await _userManager.GetUserAsync(User);
 
-        return View(categoryVMUpdate);
+            var categoryUpdate = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
+
+            if (categoryUpdate != null)
+            {
+                var categoryVMUpdate = GetCategoryVMFromCategoryModel(categoryUpdate);
+                return View(categoryVMUpdate);
+            }
+        }
+        catch { }
+
+        return null;
     }
 
     [HttpPost("update/{id}")]
     public async Task<IActionResult> Update(int id, CategoryVM categoryVM)
     {
-        var user = await _userManager.GetUserAsync(User);
-
         try
         {
-            CategoryModel categoryUpdate = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == user.Id).FirstAsync();
+            var user = await _userManager.GetUserAsync(User);
+            CategoryModel categoryUpdate = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
 
             if (categoryUpdate != null)
             {
@@ -103,24 +129,19 @@ public class CategoryController : Controller
 
                 _dbContext.Categories.Update(categoryUpdate);
                 int result = await _dbContext.SaveChangesAsync();
-
-                return RedirectToAction("Update", new { id = id });
             }
-            return Redirect("Index");
         }
-        catch
-        {
-            return Redirect("Index");
-        }
+        catch { }
+        return RedirectToAction("Update", new { id = id });
     }
 
     [HttpGet("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
         try
         {
-            CategoryModel categoryDelete = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == user.Id).FirstAsync();
+            var user = await _userManager.GetUserAsync(User);
+            CategoryModel categoryDelete = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
             if (categoryDelete != null)
             {
                 _dbContext.Categories.Remove(categoryDelete);
@@ -129,5 +150,15 @@ public class CategoryController : Controller
         }
         catch { }
         return RedirectToAction("Index");
+    }
+
+    private CategoryVM GetCategoryVMFromCategoryModel(CategoryModel category)
+    {
+        return new CategoryVM()
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Description = category.Description
+        };
     }
 }

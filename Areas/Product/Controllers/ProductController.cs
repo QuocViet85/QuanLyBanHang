@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebBanHang.Areas.Category.Model;
+using WebBanHang.Areas.DynamicAttribute.Model;
 using WebBanHang.Areas.Product.Model;
 using WebBanHang.Areas.Product.ViewModel;
 using WebBanHang.Data;
@@ -22,114 +24,128 @@ public class ProductController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var user = await _userManager.GetUserAsync(User);
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
 
-        var products = await _dbContext.Products.Where(p => p.UserId == user.Id).ToListAsync();
+            var products = await _dbContext.Products.Where(p => p.UserId == user.Id).ToListAsync();
 
-        return View(products);
+            List<ProductVM> productVMs = new List<ProductVM>();
+
+            if (products.Count > 0)
+            {
+                productVMs = products.Select(p => GetProductVMFromProductModel(p)).ToList();
+            }
+            return View(productVMs);
+        }
+        catch
+        { }
+        return null;
     }
 
     [HttpGet("detail/{id}")]
     public async Task<IActionResult> Detail(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
 
-        var product = await _dbContext.Products.Where(p => p.Id == id && p.UserId == user.Id).FirstAsync();
+            var product = await _dbContext.Products.Where(p => p.Id == id && p.UserId == user.Id).FirstOrDefaultAsync();
 
-        return View(product);
+            if (product != null)
+            {
+                var productVM = GetProductVMFromProductModel(product);
+                return View(productVM);
+            }
+        }
+        catch { }
+
+        return null;
     }
 
     [HttpGet("create")]
     public async Task<IActionResult> Create()
     {
-        var categories = await GetCategories();
-        ViewData["categories"] = categories;
-        return View();
+        try
+        {
+            var categories = await GetCategories();
+            ViewData["categories"] = categories;
+
+            var attributes = await GetAttributes();
+            ViewData["attributes"] = attributes;
+
+            return View();
+        }
+        catch { }
+        return null;
     }
 
     [HttpPost("create")]
     public async Task<IActionResult> Create(ProductVM productVM)
     {
-        if (ModelState.IsValid)
+        try
         {
-            var user = await _userManager.GetUserAsync(User);
-
-            var productModel = new ProductModel()
+            if (ModelState.IsValid)
             {
-                Name = productVM.Name,
-                Description = productVM.Description,
-                Quantity = productVM.Quantity,
-                IsActive = productVM.IsActive,
-                UserId = user.Id,
-                Price = productVM.Price,
-                Discount = productVM.Discount,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            };
+                var user = await _userManager.GetUserAsync(User);
 
-            await _dbContext.Products.AddAsync(productModel);
-            await _dbContext.SaveChangesAsync();
-            await SetCategoryProducts(productModel.Id, productVM.CategoryIds);
+                var productModel = new ProductModel()
+                {
+                    Name = productVM.Name,
+                    Description = productVM.Description,
+                    Quantity = productVM.Quantity,
+                    IsActive = productVM.IsActive,
+                    UserId = user.Id,
+                    Price = productVM.Price,
+                    Discount = productVM.Discount,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
+
+                await _dbContext.Products.AddAsync(productModel);
+                await _dbContext.SaveChangesAsync();
+
+                await SetCategoryProducts(productModel.Id, productVM.CategoryIds);
+                await SetAttributeValue(productModel.Id, productVM.DynamicAttributes);
+            }
         }
-       return RedirectToAction("Create");
-    }
-
-    private async Task<List<CategoryModel>> GetCategories()
-    {
-        var user = await _userManager.GetUserAsync(User);
-        var categories = await _dbContext.Categories.Include(c => c.CategoryProducts).Where(c => c.UserId == user.Id).ToListAsync();
-
-        return categories;
-    }
-
-    private async Task SetCategoryProducts(int productId, List<int> categoryIds)
-    {
-        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM CategoryProducts WHERE ProductId = {0}", productId);
-        foreach (var categoryId in categoryIds)
-        {
-            var categoryProduct = new CategoryProductModel()
-            {
-                ProductId = productId,
-                CategoryId = categoryId
-            };
-
-            _dbContext.CategoryProducts.Add(categoryProduct);
-        }
-        await _dbContext.SaveChangesAsync();
+        catch { }
+        return RedirectToAction("Create");
     }
 
     [HttpGet("update/{id}")]
     public async Task<IActionResult> Update(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
-
-        var productUpdate = await _dbContext.Products.Where(p => p.Id == id && p.UserId == user.Id).FirstOrDefaultAsync();
-
-        var productVMUpdate = new ProductVM()
+        try
         {
-            Id = productUpdate.Id,
-            Name = productUpdate.Name,
-            Description = productUpdate.Description,
-            Quantity = productUpdate.Quantity,
-            IsActive = productUpdate.IsActive,
-            Price = productUpdate.Price,
-            Discount = productUpdate.Discount,
-        };
+            var user = await _userManager.GetUserAsync(User);
 
-        var categories = await GetCategories();
-        ViewData["categories"] = categories;
+            var productUpdate = await _dbContext.Products.Where(p => p.Id == id && p.UserId == user.Id).FirstOrDefaultAsync();
 
-        return View(productVMUpdate);
+            if (productUpdate != null)
+            {
+                var productVMUpdate = GetProductVMFromProductModel(productUpdate);
+
+                var categories = await GetCategories();
+                ViewData["categories"] = categories;
+
+                var attributes = await GetAttributes();
+                ViewData["attributes"] = attributes;
+
+                return View(productVMUpdate);
+            }
+        }
+        catch { }
+        return null;
     }
 
     [HttpPost("update/{id}")]
     public async Task<IActionResult> Update(int id, ProductVM productVM)
     {
-        var user = await _userManager.GetUserAsync(User);
-
         try
         {
-            ProductModel productUpdate = await _dbContext.Products.Where(p => p.Id == id && p.UserId == user.Id).FirstAsync();
+            var user = await _userManager.GetUserAsync(User);
+            ProductModel productUpdate = await _dbContext.Products.Where(p => p.Id == id && p.UserId == user.Id).FirstOrDefaultAsync();
 
             if (productUpdate != null)
             {
@@ -145,26 +161,107 @@ public class ProductController : Controller
                 int result = await _dbContext.SaveChangesAsync();
             }
             await SetCategoryProducts(productUpdate.Id, productVM.CategoryIds);
+            await SetAttributeValue(productUpdate.Id, productVM.DynamicAttributes);
         }
-        catch {} 
-             return RedirectToAction("Update", new { id = id });
+        catch { }
+        return RedirectToAction("Update", new { id = id });
 
     }
-    
+
     [HttpGet("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
         try
         {
-            ProductModel productDelete = await _dbContext.Products.Where(p => p.Id == id && p.UserId == user.Id).FirstAsync();
+            var user = await _userManager.GetUserAsync(User);
+            ProductModel productDelete = await _dbContext.Products.Where(p => p.Id == id && p.UserId == user.Id).FirstOrDefaultAsync();
             if (productDelete != null)
             {
                 _dbContext.Products.Remove(productDelete);
                 int result = await _dbContext.SaveChangesAsync();
-            }   
+            }
         }
-        catch{}
+        catch { }
         return RedirectToAction("Index");
     }
+
+    private ProductVM GetProductVMFromProductModel(ProductModel product)
+    {
+        return new ProductVM()
+        {
+            Id = product.Id,
+            Name = product.Name,
+            Description = product.Description,
+            Quantity = product.Quantity,
+            IsActive = product.IsActive,
+            Price = product.Price,
+            Discount = product.Discount,
+
+        };
+    }
+
+    private async Task<List<CategoryModel>> GetCategories()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        var categories = await _dbContext.Categories.Include(c => c.CategoryProducts).Where(c => c.UserId == user.Id).ToListAsync();
+
+        return categories;
+    }
+
+    private async Task SetCategoryProducts(int productId, List<int> categoryIds)
+    {
+        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM CategoryProducts WHERE ProductId = {0}", productId);
+
+        if (categoryIds != null)
+        {
+            foreach (var categoryId in categoryIds)
+            {
+                var categoryProduct = new CategoryProductModel()
+                {
+                    ProductId = productId,
+                    CategoryId = categoryId
+                };
+
+                await _dbContext.CategoryProducts.AddAsync(categoryProduct);
+            }
+            await _dbContext.SaveChangesAsync();
+        }
+    }
+
+
+    private async Task<List<AttributeModel>> GetAttributes()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        var attributes = await _dbContext.Attributes.Include(c => c.AttributeValues).Where(c => c.UserId == user.Id).ToListAsync();
+
+        return attributes;
+    }
+
+    private async Task SetAttributeValue(int productId, Dictionary<int, string> dynamicAttributes)
+    {
+        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM DynamicAttributeValues WHERE ProductId = {0}", productId);
+
+        if (dynamicAttributes != null)
+        {
+            var attributeIds = dynamicAttributes.Keys;
+
+            foreach (var attributeId in attributeIds)
+            {
+                //attributeValue == null thì Product không có Attribute và Attribute không có Value nào tương ứng với Product => Không đưa dữ liệu vào database để không bị thừa dữ liệu
+                if (!string.IsNullOrEmpty(dynamicAttributes[attributeId]))
+                {
+                    var attributeAndValues = new AttributeValueModel()
+                    {
+                        Content = dynamicAttributes[attributeId],
+                        ProductId = productId,
+                        AttributeId = attributeId
+                    };
+                    await _dbContext.AttributeValues.AddAsync(attributeAndValues);
+                }
+            }
+            await _dbContext.SaveChangesAsync();
+        }
+    }
 }
+
+

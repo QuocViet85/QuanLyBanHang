@@ -10,7 +10,6 @@ public class CustomerModel
     public int Id {set; get;}
     public string Name {set; get;}
     public int PhoneNumber {set; get;}
-    public string? Email {set; get;}
     public string? Address {set; get;}
     public string UserId {set; get;}
 

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using WebBanHang.Areas.Category.Model;
 
 namespace WebBanHang.Areas.Product.ViewModel;
 
@@ -26,4 +27,6 @@ public class ProductVM
 
     [Display(Name = "Danh mục")]
     public List<int>? CategoryIds { set; get; }
+
+    public Dictionary<int, string> DynamicAttributes { set; get; }
 }

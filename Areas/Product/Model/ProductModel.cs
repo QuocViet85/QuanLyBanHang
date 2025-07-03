@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using WebBanHang.Areas.Category.Model;
 using WebBanHang.Areas.DynamicAttribute.Model;
 using WebBanHang.Areas.Order.Model;
+using WebBanHang.Areas.Tax.Model;
 
 namespace WebBanHang.Areas.Product.Model;
 
@@ -18,8 +19,8 @@ public class ProductModel
     public int Quantity { set; get; }
     public bool IsActive { set; get; } = true;
     public string UserId { set; get; }
-    public double Price {set; get;}
-    public double Discount {set; get;} = 0;
+    public double Price { set; get; }
+    public double Discount { set; get; } = 0;
 
     [ForeignKey("UserId")]
     public IdentityUser User { set; get; }
@@ -28,8 +29,9 @@ public class ProductModel
     public DateTime UpdatedAt { set; get; }
 
     public List<CategoryProductModel>? CategoryProducts { set; get; }
-    public List<AttributeProductModel>? AttributeProducts { set; get; }
+    public List<AttributeValueModel>? AttributeProducts { set; get; }
     public List<ProductPhotoModel>? ProductPhotos { set; get; }
     public List<OrderProductModel>? OrderProducts { set; get; }
+    public List<TaxProductModel>? TaxProducts { set; get; }
 
 }

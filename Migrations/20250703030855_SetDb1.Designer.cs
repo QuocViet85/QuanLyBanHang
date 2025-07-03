@@ -12,7 +12,7 @@ using WebBanHang.Data;
 namespace WebBanHang.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250702083700_SetDb1")]
+    [Migration("20250703030855_SetDb1")]
     partial class SetDb1
     {
         /// <inheritdoc />
@@ -330,28 +330,10 @@ namespace WebBanHang.Migrations
                     b.ToTable("DynamicAttributes");
                 });
 
-            modelBuilder.Entity("WebBanHang.Areas.DynamicAttribute.Model.AttributeProductModel", b =>
+            modelBuilder.Entity("WebBanHang.Areas.DynamicAttribute.Model.AttributeValueModel", b =>
                 {
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
-
-                    b.Property<int>("AttributeId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ProductId", "AttributeId");
-
-                    b.HasIndex("AttributeId");
-
-                    b.ToTable("AttributeProducts");
-                });
-
-            modelBuilder.Entity("WebBanHang.Areas.DynamicAttribute.Model.AttributeValueModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("AttributeId")
                         .HasColumnType("int");
@@ -360,7 +342,7 @@ namespace WebBanHang.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.HasKey("ProductId", "AttributeId");
 
                     b.HasIndex("AttributeId");
 
@@ -594,10 +576,10 @@ namespace WebBanHang.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("WebBanHang.Areas.DynamicAttribute.Model.AttributeProductModel", b =>
+            modelBuilder.Entity("WebBanHang.Areas.DynamicAttribute.Model.AttributeValueModel", b =>
                 {
                     b.HasOne("WebBanHang.Areas.DynamicAttribute.Model.AttributeModel", "Attribute")
-                        .WithMany()
+                        .WithMany("AttributeValues")
                         .HasForeignKey("AttributeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -607,22 +589,11 @@ namespace WebBanHang.Migrations
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired()
-                        .HasConstraintName("FK_Attribute_Product");
+                        .HasConstraintName("FK_Attribute_Value");
 
                     b.Navigation("Attribute");
 
                     b.Navigation("Product");
-                });
-
-            modelBuilder.Entity("WebBanHang.Areas.DynamicAttribute.Model.AttributeValueModel", b =>
-                {
-                    b.HasOne("WebBanHang.Areas.DynamicAttribute.Model.AttributeModel", "Attribute")
-                        .WithMany("AttributeValues")
-                        .HasForeignKey("AttributeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Attribute");
                 });
 
             modelBuilder.Entity("WebBanHang.Areas.Order.Model.OrderModel", b =>

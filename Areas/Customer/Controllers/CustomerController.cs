@@ -21,21 +21,41 @@ public class CustomerController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var user = await _userManager.GetUserAsync(User);
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
 
-        var customers = await _dbContext.Customers.Where(c => c.UserId == user.Id).ToListAsync();
+            var customers = await _dbContext.Customers.Where(c => c.UserId == user.Id).ToListAsync();
 
-        return View(customers);
+            List<CustomerVM> customerVMs = new List<CustomerVM>();
+
+            if (customers.Count > 0)
+            {
+                customerVMs = customers.Select(c => GetCustomerVMFromCustomerModel(c)).ToList();
+            }
+            return View(customerVMs);
+        }
+        catch { }
+        return null;
     }
 
     [HttpGet("detail/{id}")]
     public async Task<IActionResult> Detail(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
 
-        var customer = await _dbContext.Customers.Where(c => c.Id == id && c.UserId == user.Id).FirstAsync();
+            var customer = await _dbContext.Customers.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
 
-        return View(customer);
+            if (customer != null)
+            {
+                var customerVM = GetCustomerVMFromCustomerModel(customer);
+                return View(customerVM);
+            }
+        }
+        catch { }
+        return null;
     }
 
     [HttpGet("create")]
@@ -47,88 +67,96 @@ public class CustomerController : Controller
     [HttpPost("create")]
     public async Task<IActionResult> Create(CustomerVM customerVM)
     {
-        if (ModelState.IsValid)
+        try
         {
-            var user = await _userManager.GetUserAsync(User);
-
-            var customerModel = new CustomerModel()
+            if (ModelState.IsValid)
             {
-                Name = customerVM.Name,
-                PhoneNumber = customerVM.PhoneNumber,
-                Email = customerVM.Email,
-                Address = customerVM.Email,
-                UserId = user.Id,
-            };
+                var user = await _userManager.GetUserAsync(User);
 
-            await _dbContext.Customers.AddAsync(customerModel);
-            await _dbContext.SaveChangesAsync();
+                var customerModel = new CustomerModel()
+                {
+                    Name = customerVM.Name,
+                    PhoneNumber = customerVM.PhoneNumber,
+                    Address = customerVM.Address,
+                    UserId = user.Id,
+                };
 
-            return RedirectToAction("Create");
+                await _dbContext.Customers.AddAsync(customerModel);
+                await _dbContext.SaveChangesAsync();
+            }
         }
-        return View();
+        catch { }
+        return RedirectToAction("Create");
     }
 
     [HttpGet("update/{id}")]
     public async Task<IActionResult> Update(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
-
-        var customerUpdate = await _dbContext.Customers.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
-
-        var customerVMUpdate = new CustomerVM()
+        try
         {
-            Name = customerUpdate.Name,
-            PhoneNumber = customerUpdate.PhoneNumber,
-            Email = customerUpdate.Email,
-            Address = customerUpdate.Email,
-        };
+            var user = await _userManager.GetUserAsync(User);
 
-        return View(customerVMUpdate);
+            var customerUpdate = await _dbContext.Customers.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
+
+            if (customerUpdate != null)
+            {
+                var customerVMUpdate = GetCustomerVMFromCustomerModel(customerUpdate);
+                return View(customerVMUpdate);
+            }
+        }
+        catch { }
+
+        return null;
     }
 
     [HttpPost("update/{id}")]
     public async Task<IActionResult> Update(int id, CustomerVM customerVM)
     {
-        var user = await _userManager.GetUserAsync(User);
-
         try
         {
-            var customerUpdate = await _dbContext.Customers.Where(c => c.Id == id && c.UserId == user.Id).FirstAsync();
+            var user = await _userManager.GetUserAsync(User);
+            var customerUpdate = await _dbContext.Customers.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
 
             if (customerUpdate != null)
             {
                 customerUpdate.Name = customerVM.Name;
                 customerUpdate.PhoneNumber = customerVM.PhoneNumber;
-                customerUpdate.Email = customerVM.Email;
                 customerUpdate.Address = customerVM.Address;
 
                 _dbContext.Customers.Update(customerUpdate);
                 int result = await _dbContext.SaveChangesAsync();
-
-                return RedirectToAction("Update", new { id = id });
             }
-            return Redirect("Index");
         }
-        catch
-        {
-            return Redirect("Index");
-        } 
+        catch { }
+
+        return RedirectToAction("Update", new { id = id });
     }
-    
+
     [HttpGet("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
         try
         {
-            var customerDelete = await _dbContext.Customers.Where(c => c.Id == id && c.UserId == user.Id).FirstAsync();
+            var user = await _userManager.GetUserAsync(User);
+            var customerDelete = await _dbContext.Customers.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
             if (customerDelete != null)
             {
                 _dbContext.Customers.Remove(customerDelete);
                 int result = await _dbContext.SaveChangesAsync();
-            }   
+            }
         }
-        catch{}
+        catch { }
         return RedirectToAction("Index");
+    }
+
+    private CustomerVM GetCustomerVMFromCustomerModel(CustomerModel customer)
+    {
+        return new CustomerVM()
+        {
+            Id = customer.Id,
+            Name = customer.Name,
+            PhoneNumber = customer.PhoneNumber,
+            Address = customer.Address
+        };
     }
 }

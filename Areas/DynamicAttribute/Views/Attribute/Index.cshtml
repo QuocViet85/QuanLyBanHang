@@ -1,4 +1,4 @@
-@model List<AttributeModel>
+@model List<AttributeVM>
 <h1>Attributes</h1>
 
 
@@ -6,10 +6,10 @@
 
 <br>
 
-@foreach (var category in Model) {
-    <span>@category.Id - @category.Name</span> 
-    <a asp-area="category" asp-controller="category" asp-action="Detail" asp-route-id="@category.Id">Detail</a>
-    <a asp-area="category" asp-controller="category" asp-action="Update" asp-route-id="@category.Id">Update</a>  
-    <a asp-area="category" asp-controller="category" asp-action="Delete" asp-route-id="@category.Id">Delete</a>
+@foreach (var atrr in Model) {
+    <span>@atrr.Id - @atrr.Name</span> 
+    <a asp-area="DynamicAttribute" asp-controller="Attribute" asp-action="Detail" asp-route-id="@atrr.Id">Detail</a>
+    <a asp-area="DynamicAttribute" asp-controller="Attribute" asp-action="Update" asp-route-id="@atrr.Id">Update</a>  
+    <a asp-area="DynamicAttribute" asp-controller="Attribute" asp-action="Delete" asp-route-id="@atrr.Id">Delete</a>
     <br>
 }

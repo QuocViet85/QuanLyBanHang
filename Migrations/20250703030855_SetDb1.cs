@@ -280,49 +280,6 @@ namespace WebBanHang.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DynamicAttributeValues",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    AttributeId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DynamicAttributeValues", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DynamicAttributeValues_DynamicAttributes_AttributeId",
-                        column: x => x.AttributeId,
-                        principalTable: "DynamicAttributes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "AttributeProducts",
-                columns: table => new
-                {
-                    ProductId = table.Column<int>(type: "int", nullable: false),
-                    AttributeId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_AttributeProducts", x => new { x.ProductId, x.AttributeId });
-                    table.ForeignKey(
-                        name: "FK_AttributeProducts_DynamicAttributes_AttributeId",
-                        column: x => x.AttributeId,
-                        principalTable: "DynamicAttributes",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Attribute_Product",
-                        column: x => x.ProductId,
-                        principalTable: "Products",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "CategoryProducts",
                 columns: table => new
                 {
@@ -343,6 +300,30 @@ namespace WebBanHang.Migrations
                         column: x => x.ProductId,
                         principalTable: "Products",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DynamicAttributeValues",
+                columns: table => new
+                {
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    AttributeId = table.Column<int>(type: "int", nullable: false),
+                    Content = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DynamicAttributeValues", x => new { x.ProductId, x.AttributeId });
+                    table.ForeignKey(
+                        name: "FK_Attribute_Value",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_DynamicAttributeValues_DynamicAttributes_AttributeId",
+                        column: x => x.AttributeId,
+                        principalTable: "DynamicAttributes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -429,11 +410,6 @@ namespace WebBanHang.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_AttributeProducts_AttributeId",
-                table: "AttributeProducts",
-                column: "AttributeId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Categories_UserId",
                 table: "Categories",
                 column: "UserId");
@@ -501,9 +477,6 @@ namespace WebBanHang.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUserTokens");
-
-            migrationBuilder.DropTable(
-                name: "AttributeProducts");
 
             migrationBuilder.DropTable(
                 name: "CategoryProducts");

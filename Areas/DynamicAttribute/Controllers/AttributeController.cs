@@ -20,23 +20,52 @@ public class AttributeController : Controller
         _userManager = userManager;
     }
 
+    private AttributeVM GetAttributeVMFromAttribute(AttributeModel attribute)
+    {
+        return new AttributeVM()
+        {
+            Id = attribute.Id,
+            Name = attribute.Name
+        };
+    }
     public async Task<IActionResult> Index()
     {
-        var user = await _userManager.GetUserAsync(User);
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
 
-        var attributes = await _dbContext.Attributes.Where(a => a.UserId == user.Id).ToListAsync();
+            var attributes = await _dbContext.Attributes.Where(a => a.UserId == user.Id).ToListAsync();
 
-        return View(attributes);
+            List<AttributeVM> attributeVMs = new List<AttributeVM>();
+
+            if (attributes.Count > 0)
+            {
+                attributeVMs = attributes.Select(a => GetAttributeVMFromAttribute(a)).ToList();
+            }
+            return View(attributeVMs);
+        }
+        catch { }
+        return null;
     }
 
     [HttpGet("detail/{id}")]
     public async Task<IActionResult> Detail(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
 
-        var attribute = await _dbContext.Attributes.Where(a => a.Id == id && a.UserId == user.Id).FirstAsync();
+            var attribute = await _dbContext.Attributes.Where(a => a.Id == id && a.UserId == user.Id).FirstOrDefaultAsync();
 
-        return View(attribute);
+            if (attribute != null)
+            {
+                var attributeVM = GetAttributeVMFromAttribute(attribute);
+                return View(attributeVM);
+            }
+        }
+        catch { }
+        return null;
+
     }
 
     [HttpGet("create")]
@@ -48,47 +77,57 @@ public class AttributeController : Controller
     [HttpPost("create")]
     public async Task<IActionResult> Create(AttributeVM attributeVM)
     {
-        if (ModelState.IsValid)
+        try
         {
-            var user = await _userManager.GetUserAsync(User);
-
-            var attributeModel = new AttributeModel()
+            if (ModelState.IsValid)
             {
-                Name = attributeVM.Name,
-                UserId = user.Id
-            };
+                var user = await _userManager.GetUserAsync(User);
 
-            await _dbContext.Attributes.AddAsync(attributeModel);
-            await _dbContext.SaveChangesAsync();
+                var attributeModel = new AttributeModel()
+                {
+                    Name = attributeVM.Name,
+                    UserId = user.Id
+                };
 
-            return RedirectToAction("Create");
+                await _dbContext.Attributes.AddAsync(attributeModel);
+                await _dbContext.SaveChangesAsync();
+
+                return RedirectToAction("Create");
+            }
+            return View();
         }
+        catch { }
         return View();
     }
 
     [HttpGet("update/{id}")]
     public async Task<IActionResult> Update(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
-
-        var attributeUpdate = await _dbContext.Attributes.Where(a => a.Id == id && a.UserId == user.Id).FirstOrDefaultAsync();
-
-        var AttributeVMUpdate = new AttributeVM()
+        try
         {
-            Name = attributeUpdate.Name,
-        };
+            var user = await _userManager.GetUserAsync(User);
 
-        return View(AttributeVMUpdate);
+            var attributeUpdate = await _dbContext.Attributes.Where(a => a.Id == id && a.UserId == user.Id).FirstOrDefaultAsync();
+
+            if (attributeUpdate != null)
+            {
+                var AttributeVMUpdate = GetAttributeVMFromAttribute(attributeUpdate);
+
+                return View(AttributeVMUpdate);
+            }
+        }
+        catch { }
+
+        return null;
     }
 
     [HttpPost("update/{id}")]
     public async Task<IActionResult> Update(int id, AttributeVM AttributeVM)
     {
-        var user = await _userManager.GetUserAsync(User);
-
         try
         {
-            var attributeUpdate = await _dbContext.Attributes.Where(a => a.Id == id && a.UserId == user.Id).FirstAsync();
+            var user = await _userManager.GetUserAsync(User);
+            var attributeUpdate = await _dbContext.Attributes.Where(a => a.Id == id && a.UserId == user.Id).FirstOrDefaultAsync();
 
             if (attributeUpdate != null)
             {
@@ -96,24 +135,19 @@ public class AttributeController : Controller
 
                 _dbContext.Attributes.Update(attributeUpdate);
                 int result = await _dbContext.SaveChangesAsync();
-
-                return RedirectToAction("Update", new { id = id });
             }
-            return Redirect("Index");
         }
-        catch
-        {
-            return Redirect("Index");
-        }
+        catch { }
+        return RedirectToAction("Update", new { id = id });
     }
 
     [HttpGet("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var user = await _userManager.GetUserAsync(User);
         try
         {
-            var attributeDelete = await _dbContext.Attributes.Where(a => a.Id == id && a.UserId == user.Id).FirstAsync();
+            var user = await _userManager.GetUserAsync(User);
+            var attributeDelete = await _dbContext.Attributes.Where(a => a.Id == id && a.UserId == user.Id).FirstOrDefaultAsync();
             if (attributeDelete != null)
             {
                 _dbContext.Attributes.Remove(attributeDelete);
