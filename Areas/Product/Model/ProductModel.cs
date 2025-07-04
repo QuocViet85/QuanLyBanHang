@@ -19,8 +19,8 @@ public class ProductModel
     public int Quantity { set; get; }
     public bool IsActive { set; get; } = true;
     public string UserId { set; get; }
-    public double Price { set; get; }
-    public double Discount { set; get; } = 0;
+    public decimal Price { set; get; }
+    public decimal Discount { set; get; } = 0;
 
     [ForeignKey("UserId")]
     public IdentityUser User { set; get; }

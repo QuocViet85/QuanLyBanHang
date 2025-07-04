@@ -20,10 +20,10 @@ public class ProductVM
     public bool IsActive { set; get; } = true;
 
     [Display(Name = "Giá")]
-    public double Price { set; get; }
+    public decimal Price { set; get; }
 
     [Display(Name = "Giảm giá")]
-    public double Discount { set; get; }
+    public decimal Discount { set; get; }
 
     [Display(Name = "Danh mục")]
     public List<int>? CategoryIds { set; get; }

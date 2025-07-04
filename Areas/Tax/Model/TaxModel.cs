@@ -15,5 +15,6 @@ public class TaxModel
     public string? Description { set; get; }
     public bool IsActive { set; get; } = true;
     public bool IsDefault { set; get; }
+    public List<TaxProductModel> TaxProducts { set; get; }
 
 }

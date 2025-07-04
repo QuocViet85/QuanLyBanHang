@@ -24,7 +24,8 @@ public class OrderModel
     public bool Completed { set; get; } = false;
     public DateTime CreatedAt { set; get; }
     public DateTime UpdatedAt { set; get; }
-    public double Total { set; get; }
+    public decimal TotalBeforeTax { set; get; }
+    public decimal TotalAfterTax { set; get; }
     public List<OrderProductModel> OrderProducts { set; get; }
 
 }

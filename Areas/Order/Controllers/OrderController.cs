@@ -5,6 +5,8 @@ using WebBanHang.Areas.Order.ViewModel;
 using WebBanHang.Data;
 using WebBanHang.Areas.Order.Model;
 using WebBanHang.Areas.Customer.Model;
+using WebBanHang.Areas.Tax.Model;
+using WebBanHang.Areas.Product.Model;
 
 namespace WebBanHang.Areas.Order.Controllers;
 
@@ -191,10 +193,32 @@ public class OrderController : Controller
         try
         {
             var user = await _userManager.GetUserAsync(User);
-            OrderModel OrderDelete = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
-            if (OrderDelete != null)
+            OrderModel orderDelete = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
+            if (orderDelete != null)
             {
-                _dbContext.Orders.Remove(OrderDelete);
+                _dbContext.Orders.Remove(orderDelete);
+                int result = await _dbContext.SaveChangesAsync();
+            }
+        }
+        catch { }
+        return RedirectToAction("Index");
+    }
+
+    [HttpGet("destroy/{id}")]
+    public async Task<IActionResult> Destroy(int id)
+    {
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var orderDestroy = await _dbContext.Orders.Include(o => o.OrderProducts).ThenInclude(op => op.Product).Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
+            if (orderDestroy != null)
+            {
+                foreach (var orderProduct in orderDestroy.OrderProducts)
+                {
+                    orderProduct.Product.Quantity += orderProduct.Quantity;
+                }
+                _dbContext.OrderProducts.RemoveRange(orderDestroy.OrderProducts);
+                _dbContext.Orders.Remove(orderDestroy);
                 int result = await _dbContext.SaveChangesAsync();
             }
         }
@@ -224,5 +248,73 @@ public class OrderController : Controller
     {
         var user = await _userManager.GetUserAsync(User);
         return await _dbContext.Customers.Where(c => c.UserId == user.Id && c.Id == id).FirstOrDefaultAsync();
+    }
+
+    private async Task CalculateTotal(OrderModel order, OrderVM orderVM)
+    {
+        decimal totalBeforeTax = 0;
+        decimal TotalAfterTax = 0;
+
+        if (orderVM.ProductInOrders != null)
+        {
+            var taxDefaults = await GetTaxDefaults();
+            foreach (var productInOrder in orderVM.ProductInOrders)
+            {
+                var product = await _dbContext.Products.Include(p => p.TaxProducts).ThenInclude(t => t.Tax).Where(p => p.Id == productInOrder.ProductId).FirstOrDefaultAsync();
+
+                if (product != null && product.Quantity >= productInOrder.Quantity)
+                {
+                    //Giá trước thuế
+                    decimal priceBeforeTax = productInOrder.Quantity * (product.Price - product.Price * product.Discount);
+                    totalBeforeTax += priceBeforeTax;
+
+                    //Giá sau thuế
+                    // Thuế mặc định
+                    decimal priceAfterTax = priceBeforeTax;
+                    string taxes = "";
+                    foreach (var taxDefault in taxDefaults)
+                    {
+                        priceAfterTax += priceBeforeTax * taxDefault.Rate;
+                        taxes += $"{taxDefault.Name} - {taxDefault.Rate * 100} %, ";
+                    }
+
+                    // Thuế riêng của sản phẩm
+                    if (product.TaxProducts != null)
+                    {
+                        foreach (var taxProduct in product.TaxProducts)
+                        {
+                            if (taxProduct.Tax != null)
+                            {
+                                priceAfterTax += priceBeforeTax * taxProduct.Tax.Rate;
+                                taxes += $"{taxProduct.Tax.Name} - {taxProduct.Tax.Rate * 100} %, ";
+                            }
+                        }
+                    }
+
+                    var orderProduct = new OrderProductModel()
+                    {
+                        ProductId = product.Id,
+                        OrderId = order.Id,
+                        Taxes = taxes,
+                        Discount = product.Discount,
+                        PriceBeforeTax = priceBeforeTax,
+                        PriceAfterTax = priceAfterTax
+                    };
+                    await _dbContext.AddAsync(orderProduct);
+                    product.Quantity = product.Quantity - productInOrder.Quantity;
+
+                    totalBeforeTax += priceBeforeTax;
+                    TotalAfterTax += priceAfterTax;
+                }
+            }
+            order.TotalBeforeTax = totalBeforeTax;
+            order.TotalAfterTax = TotalAfterTax;
+            await _dbContext.SaveChangesAsync();
+        }
+    }
+
+    private async Task<List<TaxModel>> GetTaxDefaults()
+    {
+        return await _dbContext.Taxes.Where(t => t.IsDefault).ToListAsync();
     }
 }

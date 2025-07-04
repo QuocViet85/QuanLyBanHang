@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -178,7 +179,8 @@ public class ProductController : Controller
             if (productDelete != null)
             {
                 _dbContext.Products.Remove(productDelete);
-                int result = await _dbContext.SaveChangesAsync();
+                await _dbContext.SaveChangesAsync();
+                await DeleteRelations(productDelete.Id);
             }
         }
         catch { }
@@ -261,6 +263,21 @@ public class ProductController : Controller
             }
             await _dbContext.SaveChangesAsync();
         }
+    }
+
+    private async Task DeleteRelations(int id)
+    {
+        var categoryProducts = await _dbContext.CategoryProducts.Where(ct => ct.ProductId == id).ToListAsync();
+        var attributeValues = await _dbContext.AttributeValues.Where(at => at.ProductId == id).ToListAsync();
+        var orderProducts = await _dbContext.OrderProducts.Where(op => op.ProductId == id).ToListAsync();
+        var taxProducts = await _dbContext.TaxProducts.Where(tp => tp.ProductId == id).ToListAsync();
+
+        _dbContext.RemoveRange(categoryProducts);
+        _dbContext.RemoveRange(attributeValues);
+        _dbContext.RemoveRange(orderProducts);
+        _dbContext.RemoveRange(taxProducts);
+
+        await _dbContext.SaveChangesAsync();
     }
 }
 
