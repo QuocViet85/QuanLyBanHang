@@ -28,5 +28,8 @@ public class ProductVM
     [Display(Name = "Danh mục")]
     public List<int>? CategoryIds { set; get; }
 
-    public Dictionary<int, string> DynamicAttributes { set; get; }
+    [Display(Name = "Thuế")]
+    public List<int>? PrivateTaxIds { set; get; }
+
+    public Dictionary<int, string>? DynamicAttributes { set; get; }
 }

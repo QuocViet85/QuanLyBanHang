@@ -24,7 +24,6 @@ public class ProductModel
 
     [ForeignKey("UserId")]
     public IdentityUser User { set; get; }
-
     public DateTime CreatedAt { set; get; }
     public DateTime UpdatedAt { set; get; }
 

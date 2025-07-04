@@ -21,7 +21,7 @@ public class OrderModel
 
     [ForeignKey("CustomerId")]
     public CustomerModel? Customer { set; get; }
-    public bool Completed { set; get; } = false;
+    public bool Completed { set; get; } = true;
     public DateTime CreatedAt { set; get; }
     public DateTime UpdatedAt { set; get; }
     public decimal TotalBeforeTax { set; get; }

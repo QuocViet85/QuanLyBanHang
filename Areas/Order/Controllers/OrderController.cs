@@ -7,11 +7,13 @@ using WebBanHang.Areas.Order.Model;
 using WebBanHang.Areas.Customer.Model;
 using WebBanHang.Areas.Tax.Model;
 using WebBanHang.Areas.Product.Model;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebBanHang.Areas.Order.Controllers;
 
 [Area("Order")]
-[Route("Order")]
+[Route("order")]
+[Authorize]
 public class OrderController : Controller
 {
     private readonly ApplicationDbContext _dbContext;
@@ -32,7 +34,7 @@ public class OrderController : Controller
 
             List<OrderVM> orderVMs = new List<OrderVM>();
 
-            if (orderVMs.Count > 0)
+            if (orders.Count > 0)
             {
                 orderVMs = orders.Select(p => GetOrderVMFromOrderModel(p)).ToList();
             }
@@ -70,6 +72,7 @@ public class OrderController : Controller
         try
         {
             ViewData["customers"] = await GetCustomers();
+            ViewData["products"] = await GetProducts();
             return View();
         }
         catch { }
@@ -97,7 +100,7 @@ public class OrderController : Controller
 
                 if (orderVM.CustomerId != 0)
                 {
-                    var customer = await GetCustomerById((int)orderVM.CustomerId);
+                    var customer = await GetCustomerById(orderVM.CustomerId);
                     if (customer != null)
                     {
                         orderModel.CustomerId = customer.Id;
@@ -111,11 +114,23 @@ public class OrderController : Controller
                 {
                     orderModel.CustomerName = orderVM.CustomerName;
                 }
-                await _dbContext.Orders.AddAsync(orderModel);
-                await _dbContext.SaveChangesAsync();
+
+                if (orderVM.ProductInOrders != null)
+                {
+                    await _dbContext.Orders.AddAsync(orderModel);
+                    await _dbContext.SaveChangesAsync();
+
+                    orderVM.ProductInOrders = orderVM.ProductInOrders.Where((ProductInOrder po) =>
+                    {
+                        return po.ProductId > 0 && po.Quantity > 0;
+                    }).ToList();
+
+                    await CalculateTotalPrice(orderModel, orderVM);
+                }
             }
         }
-        catch { }
+        catch
+        {}
 
         return RedirectToAction("Create");
     }
@@ -161,7 +176,7 @@ public class OrderController : Controller
 
                 if (orderVM.CustomerId != 0)
                 {
-                    var customer = await GetCustomerById((int)orderVM.CustomerId);
+                    var customer = await GetCustomerById(orderVM.CustomerId);
                     if (customer != null)
                     {
                         orderUpdate.CustomerId = customer.Id;
@@ -244,14 +259,25 @@ public class OrderController : Controller
         return await _dbContext.Customers.Where(c => c.UserId == user.Id).ToListAsync();
     }
 
-    private async Task<CustomerModel> GetCustomerById(int id)
+    private async Task<CustomerModel> GetCustomerById(int? id)
     {
-        var user = await _userManager.GetUserAsync(User);
-        return await _dbContext.Customers.Where(c => c.UserId == user.Id && c.Id == id).FirstOrDefaultAsync();
+        if (id.HasValue)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            return await _dbContext.Customers.Where(c => c.UserId == user.Id && c.Id == id).FirstOrDefaultAsync();
+        }
+        return null;
     }
 
-    private async Task CalculateTotal(OrderModel order, OrderVM orderVM)
+    private async Task<List<ProductModel>> GetProducts()
     {
+        var user = await _userManager.GetUserAsync(User);
+        return await _dbContext.Products.Where(p => p.UserId == user.Id).ToListAsync();
+    }
+
+    private async Task CalculateTotalPrice(OrderModel order, OrderVM orderVM)
+    {
+        var user = await _userManager.GetUserAsync(User);
         decimal totalBeforeTax = 0;
         decimal TotalAfterTax = 0;
 
@@ -260,12 +286,12 @@ public class OrderController : Controller
             var taxDefaults = await GetTaxDefaults();
             foreach (var productInOrder in orderVM.ProductInOrders)
             {
-                var product = await _dbContext.Products.Include(p => p.TaxProducts).ThenInclude(t => t.Tax).Where(p => p.Id == productInOrder.ProductId).FirstOrDefaultAsync();
+                var product = await _dbContext.Products.Include(p => p.TaxProducts).ThenInclude(t => t.Tax).Where(p => p.Id == productInOrder.ProductId && p.UserId == user.Id).FirstOrDefaultAsync();
 
                 if (product != null && product.Quantity >= productInOrder.Quantity)
                 {
                     //Giá trước thuế
-                    decimal priceBeforeTax = productInOrder.Quantity * (product.Price - product.Price * product.Discount);
+                    decimal priceBeforeTax = (int)productInOrder.Quantity * (product.Price - product.Discount);
                     totalBeforeTax += priceBeforeTax;
 
                     //Giá sau thuế
@@ -283,7 +309,7 @@ public class OrderController : Controller
                     {
                         foreach (var taxProduct in product.TaxProducts)
                         {
-                            if (taxProduct.Tax != null)
+                            if (taxProduct.Tax != null && taxProduct.Tax.IsActive)
                             {
                                 priceAfterTax += priceBeforeTax * taxProduct.Tax.Rate;
                                 taxes += $"{taxProduct.Tax.Name} - {taxProduct.Tax.Rate * 100} %, ";
@@ -297,24 +323,32 @@ public class OrderController : Controller
                         OrderId = order.Id,
                         Taxes = taxes,
                         Discount = product.Discount,
+                        Quantity = product.Quantity,
                         PriceBeforeTax = priceBeforeTax,
                         PriceAfterTax = priceAfterTax
                     };
                     await _dbContext.AddAsync(orderProduct);
-                    product.Quantity = product.Quantity - productInOrder.Quantity;
+                    product.Quantity = product.Quantity - (int)productInOrder.Quantity;
 
                     totalBeforeTax += priceBeforeTax;
                     TotalAfterTax += priceAfterTax;
+
+                    order.TotalBeforeTax = totalBeforeTax;
+                    order.TotalAfterTax = TotalAfterTax;
+                    await _dbContext.SaveChangesAsync();
+                }
+                else
+                {
+                    _dbContext.Orders.Remove(order);
+                    await _dbContext.SaveChangesAsync();
                 }
             }
-            order.TotalBeforeTax = totalBeforeTax;
-            order.TotalAfterTax = TotalAfterTax;
-            await _dbContext.SaveChangesAsync();
         }
     }
 
     private async Task<List<TaxModel>> GetTaxDefaults()
     {
-        return await _dbContext.Taxes.Where(t => t.IsDefault).ToListAsync();
+        var user = await _userManager.GetUserAsync(User);
+        return await _dbContext.Taxes.Where(t => t.IsDefault && t.IsActive && t.UserId == user.Id).ToListAsync();
     }
 }

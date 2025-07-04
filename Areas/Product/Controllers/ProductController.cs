@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -7,12 +8,14 @@ using WebBanHang.Areas.Category.Model;
 using WebBanHang.Areas.DynamicAttribute.Model;
 using WebBanHang.Areas.Product.Model;
 using WebBanHang.Areas.Product.ViewModel;
+using WebBanHang.Areas.Tax.Model;
 using WebBanHang.Data;
 
 namespace WebBanHang.Areas.Product.Controllers;
 
 [Area("Product")]
 [Route("product")]
+[Authorize]
 public class ProductController : Controller
 {
     private readonly ApplicationDbContext _dbContext;
@@ -75,6 +78,9 @@ public class ProductController : Controller
             var attributes = await GetAttributes();
             ViewData["attributes"] = attributes;
 
+            var privateTaxes = await GetPrivateTaxes();
+            ViewData["privateTaxes"] = privateTaxes;
+
             return View();
         }
         catch { }
@@ -106,7 +112,9 @@ public class ProductController : Controller
                 await _dbContext.Products.AddAsync(productModel);
                 await _dbContext.SaveChangesAsync();
 
+
                 await SetCategoryProducts(productModel.Id, productVM.CategoryIds);
+                await SetPrivateTax(productModel.Id, productVM.PrivateTaxIds);
                 await SetAttributeValue(productModel.Id, productVM.DynamicAttributes);
             }
         }
@@ -132,6 +140,9 @@ public class ProductController : Controller
 
                 var attributes = await GetAttributes();
                 ViewData["attributes"] = attributes;
+
+                var privateTaxes = await GetPrivateTaxes();
+                ViewData["privateTaxes"] = privateTaxes;
 
                 return View(productVMUpdate);
             }
@@ -162,6 +173,7 @@ public class ProductController : Controller
                 int result = await _dbContext.SaveChangesAsync();
             }
             await SetCategoryProducts(productUpdate.Id, productVM.CategoryIds);
+            await SetPrivateTax(productUpdate.Id, productVM.PrivateTaxIds);
             await SetAttributeValue(productUpdate.Id, productVM.DynamicAttributes);
         }
         catch { }
@@ -230,6 +242,31 @@ public class ProductController : Controller
         }
     }
 
+    private async Task<List<TaxModel>> GetPrivateTaxes()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        return await _dbContext.Taxes.Include(t => t.TaxProducts).Where(t => !t.IsDefault && t.UserId == user.Id).ToListAsync();
+    }
+
+    private async Task SetPrivateTax(int productId, List<int> taxIds)
+    {
+       // await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM TaxProducts WHERE ProductId = {0}", productId);
+
+        if (taxIds != null)
+        {
+            foreach (var taxId in taxIds)
+            {
+                var taxProduct = new TaxProductModel()
+                {
+                    ProductId = productId,
+                    TaxId = taxId
+                };
+
+                await _dbContext.TaxProducts.AddAsync(taxProduct);
+            }
+            await _dbContext.SaveChangesAsync();
+        }
+    }
 
     private async Task<List<AttributeModel>> GetAttributes()
     {
@@ -267,17 +304,10 @@ public class ProductController : Controller
 
     private async Task DeleteRelations(int id)
     {
-        var categoryProducts = await _dbContext.CategoryProducts.Where(ct => ct.ProductId == id).ToListAsync();
-        var attributeValues = await _dbContext.AttributeValues.Where(at => at.ProductId == id).ToListAsync();
-        var orderProducts = await _dbContext.OrderProducts.Where(op => op.ProductId == id).ToListAsync();
-        var taxProducts = await _dbContext.TaxProducts.Where(tp => tp.ProductId == id).ToListAsync();
-
-        _dbContext.RemoveRange(categoryProducts);
-        _dbContext.RemoveRange(attributeValues);
-        _dbContext.RemoveRange(orderProducts);
-        _dbContext.RemoveRange(taxProducts);
-
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM CategoryProducts WHERE ProductId = {0}", id);
+        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM AttributeValues WHERE ProductId = {0}", id);
+        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM OrderProducts WHERE ProductId = {0}", id);
+        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM TaxProducts WHERE ProductId = {0}", id);
     }
 }
 

@@ -4,11 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using WebBanHang.Areas.Customer.ViewModel;
 using WebBanHang.Areas.Customer.Model;
 using WebBanHang.Data;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebBanHang.Areas.Customer.Controllers;
 
 [Area("Customer")]
 [Route("customer")]
+[Authorize]
 public class CustomerController : Controller
 {
     private readonly ApplicationDbContext _dbContext;

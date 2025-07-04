@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ namespace WebBanHang.Areas.Category.Controllers;
 
 [Area("Category")]
 [Route("category")]
+[Authorize]
 public class CategoryController : Controller
 {
     private readonly ApplicationDbContext _dbContext;

@@ -2,6 +2,7 @@
 
 @{
     List<CustomerModel> customers = ViewData["customers"] as List<CustomerModel>;
+    List<ProductModel> products = ViewData["products"] as List<ProductModel>;
 }
 
 <h1>Create Order</h1>
@@ -26,6 +27,22 @@
             <label asp-for="CustomerId"></label>
             @foreach (var customer in customers) {
                 <input type="radio" name="CustomerId" value="@customer.Id"> <span>@customer.Name</span>
+            }
+        </div>
+    }
+
+    @if (products.Count > 0) {
+        <div>
+            @{
+                int index = 0;
+            }
+
+            @foreach (var product in products) {
+                <div>
+                    <input type="checkbox" name="ProductInOrders[@index].ProductId" value="@product.Id"> <span>@product.Name</span>
+                    <span>Số lượng: </span> <input type="number" name="ProductInOrders[@index].Quantity" value=""> 
+                </div>
+                index++;
             }
         </div>
     }

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ namespace WebBanHang.Areas.DynamicAttribute.Controllers;
 
 [Area("DynamicAttribute")]
 [Route("attribute")]
+[Authorize]
 public class AttributeController : Controller
 {
     private readonly ApplicationDbContext _dbContext;

@@ -22,6 +22,6 @@ public class OrderVM
 
 public class ProductInOrder
 {
-    public int ProductId { set; get; }
-    public int Quantity { set; get; }
+    public int? ProductId { set; get; }
+    public int? Quantity { set; get; }
 }

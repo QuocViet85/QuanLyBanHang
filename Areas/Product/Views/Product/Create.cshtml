@@ -2,6 +2,7 @@
 @{
     List<CategoryModel> categories = ViewData["categories"] as List<CategoryModel>;
     List<AttributeModel> attributes = ViewData["attributes"] as List<AttributeModel>;
+    List<TaxModel> privateTaxes = ViewData["privateTaxes"] as List<TaxModel>;
 }
 <h1>Create Product</h1>
 
@@ -44,6 +45,7 @@
         <span asp-validation-for="Discount"></span>
     </div>
 
+    <h3>Thuộc tính</h3>
     @foreach (var atrr in attributes) {
         <div>
             <label>@atrr.Name</label>
@@ -51,6 +53,17 @@
         </div>
     }
 
+    <h3>Thuế</h3>
+    <div>
+        @foreach (var tax in privateTaxes) {
+            <label>
+                <input type="checkbox" name="PrivateTaxIds" value="@tax.Id"> @tax.Name
+            </label>
+            
+        }
+    </div>
+
+    <h3>Danh mục</h3>
     <div>
         @foreach (var category in categories) {
             <label>
