@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.CodeAnalysis.FlowAnalysis.DataFlow;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebBanHang.Areas.Tax.Model;
 
@@ -12,6 +13,8 @@ public class TaxModel
     public int Id { set; get; }
     public string Name { set; get; }
     public string? Code { set; get; }
+
+    [Precision(18, 2)]
     public decimal Rate { set; get; }
     public string? Description { set; get; }
     public bool IsActive { set; get; } = true;

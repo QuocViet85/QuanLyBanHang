@@ -14,7 +14,7 @@ using WebBanHang.Data;
 namespace WebBanHang.Areas.Product.Controllers;
 
 [Area("Product")]
-[Route("product")]
+[Route("api/product")]
 [Authorize]
 public class ProductController : Controller
 {
@@ -32,7 +32,11 @@ public class ProductController : Controller
         {
             var user = await _userManager.GetUserAsync(User);
 
-            var products = await _dbContext.Products.Where(p => p.UserId == user.Id).ToListAsync();
+            var products = await _dbContext.Products.Where(p => p.UserId == user.Id)
+                                                    .Include(p => p.CategoryProducts)
+                                                    .Include(p => p.AttributeProducts)
+                                                    .Include(p => p.TaxProducts)
+                                                    .ToListAsync();
 
             List<ProductVM> productVMs = new List<ProductVM>();
 
@@ -40,7 +44,8 @@ public class ProductController : Controller
             {
                 productVMs = products.Select(p => GetProductVMFromProductModel(p)).ToList();
             }
-            return View(productVMs);
+            return Ok(productVMs);
+            //return View(productVMs);
         }
         catch
         { }
@@ -147,13 +152,14 @@ public class ProductController : Controller
                 return View(productVMUpdate);
             }
         }
-        catch { }
+        catch { throw; }
         return null;
     }
 
     [HttpPost("update/{id}")]
     public async Task<IActionResult> Update(int id, ProductVM productVM)
     {
+        Console.WriteLine("NULL PR");
         try
         {
             var user = await _userManager.GetUserAsync(User);
@@ -161,6 +167,7 @@ public class ProductController : Controller
 
             if (productUpdate != null)
             {
+
                 productUpdate.Name = productVM.Name;
                 productUpdate.Description = productVM.Description;
                 productUpdate.Quantity = productVM.Quantity;
@@ -176,7 +183,7 @@ public class ProductController : Controller
             await SetPrivateTax(productUpdate.Id, productVM.PrivateTaxIds);
             await SetAttributeValue(productUpdate.Id, productVM.DynamicAttributes);
         }
-        catch { }
+        catch {  }
         return RedirectToAction("Update", new { id = id });
 
     }
@@ -201,17 +208,41 @@ public class ProductController : Controller
 
     private ProductVM GetProductVMFromProductModel(ProductModel product)
     {
-        return new ProductVM()
-        {
-            Id = product.Id,
-            Name = product.Name,
-            Description = product.Description,
-            Quantity = product.Quantity,
-            IsActive = product.IsActive,
-            Price = product.Price,
-            Discount = product.Discount,
+        var productVM = new ProductVM();
+        productVM.Id = product.Id;
+        productVM.Name = product.Name;
+        productVM.Description = product.Description;
+        productVM.Quantity = product.Quantity;
+        productVM.IsActive = product.IsActive;
+        productVM.Price = product.Price;
+        productVM.Discount = product.Discount;
 
-        };
+
+        if (product.CategoryProducts != null)
+        {
+            foreach (var categoryProduct in product.CategoryProducts)
+            {
+                productVM.CategoryIds.Add(categoryProduct.CategoryId);
+            }
+        }
+
+        if (product.AttributeProducts != null)
+        {
+            foreach (var attributeProduct in product.AttributeProducts)
+            {
+                productVM.DynamicAttributes.Add(attributeProduct.AttributeId, attributeProduct.Content);
+            }
+        }
+
+        if (product.TaxProducts != null)
+        {
+            foreach (var taxProduct in product.TaxProducts)
+            {
+                productVM.PrivateTaxIds.Add(taxProduct.TaxId);
+            }
+        }
+        
+        return productVM;
     }
 
     private async Task<List<CategoryModel>> GetCategories()
@@ -250,7 +281,7 @@ public class ProductController : Controller
 
     private async Task SetPrivateTax(int productId, List<int> taxIds)
     {
-       // await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM TaxProducts WHERE ProductId = {0}", productId);
+       await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM TaxProducts WHERE ProductId = {0}", productId);
 
         if (taxIds != null)
         {

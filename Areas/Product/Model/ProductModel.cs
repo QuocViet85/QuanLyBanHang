@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using WebBanHang.Areas.Category.Model;
 using WebBanHang.Areas.DynamicAttribute.Model;
 using WebBanHang.Areas.Order.Model;
@@ -19,7 +20,11 @@ public class ProductModel
     public int Quantity { set; get; }
     public bool IsActive { set; get; } = true;
     public string UserId { set; get; }
+
+    [Precision(18, 2)]
     public decimal Price { set; get; }
+
+    [Precision(18, 2)]
     public decimal Discount { set; get; } = 0;
 
     [ForeignKey("UserId")]

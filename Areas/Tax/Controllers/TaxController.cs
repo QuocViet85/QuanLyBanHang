@@ -8,7 +8,7 @@ using WebBanHang.Data;
 namespace WebBanHang.Areas.Tax.Controllers;
 
 [Area("Tax")]
-[Route("tax")]
+[Route("api/tax")]
 public class TaxController : Controller
 {
     private readonly ApplicationDbContext _dbContext;
@@ -33,7 +33,29 @@ public class TaxController : Controller
             {
                 taxVMs = taxes.Select(p => GetTaxVMFromtaxModel(p)).ToList();
             }
-            return View(taxVMs);
+            return Ok(taxVMs);
+        }
+        catch
+        { }
+        return null;
+    }
+
+    [HttpGet("active")]
+    public async Task<IActionResult> GetTaxActive()
+    {
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            var taxes = await _dbContext.Taxes.Where(t => t.UserId == user.Id && t.IsActive).ToListAsync();
+
+            List<TaxViewModel> taxVMs = new List<TaxViewModel>();
+
+            if (taxes.Count > 0)
+            {
+                taxVMs = taxes.Select(p => GetTaxVMFromtaxModel(p)).ToList();
+            }
+            return Ok(taxVMs);
         }
         catch
         { }

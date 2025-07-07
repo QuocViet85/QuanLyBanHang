@@ -9,7 +9,7 @@ using WebBanHang.Data;
 namespace WebBanHang.Areas.Category.Controllers;
 
 [Area("Category")]
-[Route("category")]
+[Route("api/category")]
 [Authorize]
 public class CategoryController : Controller
 {
@@ -36,7 +36,7 @@ public class CategoryController : Controller
             {
                 categoryVMs = categories.Select(c => GetCategoryVMFromCategoryModel(c)).ToList();
             }
-            return View(categoryVMs);
+            return Ok(categoryVMs);
         }
         catch { }
 

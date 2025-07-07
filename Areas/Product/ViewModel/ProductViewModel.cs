@@ -26,10 +26,10 @@ public class ProductVM
     public decimal Discount { set; get; }
 
     [Display(Name = "Danh mục")]
-    public List<int>? CategoryIds { set; get; }
+    public List<int>? CategoryIds { set; get; } = new List<int>();
 
     [Display(Name = "Thuế")]
-    public List<int>? PrivateTaxIds { set; get; }
+    public List<int>? PrivateTaxIds { set; get; } = new List<int>();
 
-    public Dictionary<int, string>? DynamicAttributes { set; get; }
+    public Dictionary<int, string>? DynamicAttributes { set; get; } = new Dictionary<int, string>();
 }
