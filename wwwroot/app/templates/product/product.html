@@ -1,5 +1,5 @@
 <h2>Danh sách sản phẩm</h2>
-<button type="button" class="btn btn-primary text-left">Tạo sản phẩm</button>
+<button type="button" class="btn btn-primary text-left" ng-click="openPopupCreate()">Tạo sản phẩm</button>
 
 <table class="table">
   <thead>
@@ -10,6 +10,8 @@
       <th scope="col">Đang Bán</th>
       <th scope="col">Giá</th>
       <th scope="col">Giảm giá</th>
+      <th scope="col">Ngày thêm</th>
+      <th scope="col">Ngày sửa</th>
       <th scope="col"></th>
       <th scope="col"></th>
       <th scope="col"></th>
@@ -26,85 +28,34 @@
       <td>{{ item.isActive ? "Có" : "Không" }}</td>
       <td>{{ item.price }}</td>
       <td>{{ item.discount }}</td>
+      <td>{{ item.createdAt }}</td>
+      <td>{{ item.updatedAt }}</td>
       <td><button ng-click="openPopupDescription(item)" class="btn btn-info" href="">Xem mô tả</button></td>
       <td><button ng-click="openPopupDynamicAttribute(item)" class="btn btn-dark" href="">Các thuộc tính động</button></td>
-      <td><a ng-click="openPopUpCategory(item)" class="btn btn-primary" href="">Danh mục</a></td>
-      <td><a ng-click="openPopUpTax(item)" class="btn btn-success" href="">Thuế</a></td>
-      <td><a class="btn btn-warning" href="">Sửa</a></td>
-      <td><a class="btn btn-danger" href="">Xóa</a></td>
+      <td><a ng-click="openPopupCategory(item)" class="btn btn-primary" href="">Danh mục</a></td>
+      <td><a ng-click="openPopupTax(item)" class="btn btn-success" href="">Thuế</a></td>
+      <td><a ng-click="openPopupUpdate(item)" class="btn btn-warning" href="">Sửa</a></td>
+      <td><a ng-click="openPopupDelete(item)" class="btn btn-danger" href="">Xóa</a></td>
     </tr>
   </tbody>
 </table>
 
-<div class="overlay" ng-show="showPopupDescription">
-  <div class="popup">
-    <h3>Mô tả sản phẩm</h3>
-    <p>{{ productNow.description }}</p>
-    <button ng-click="closePopupDescription()">Đóng</button>
-  </div>
-</div>
 
-<div class="overlay" ng-show="showPopupDynamicAttribute">
-  <div class="popup">
-    <h3>Thuộc tính động của sản phẩm</h3>
-    <table border="0" style="display: flex; justify-content: center;">
-      <tr ng-repeat="(key, value) in productNow.dynamicAttributes">
-        <td>
-          <span style="font-weight: bold;">{{ key }} :</span>
-        </td>
-        <td>
-          {{ value }}
-        </td>
-      </tr>
-    </table>
-    <button ng-click="closePopupDynamicAttribute()">Đóng</button>
-  </div>
-</div>
+    <button ng-click="paginate.minusPageNumber()" class="btn btn-dark btn-sm">Lùi</button>
+    <input id="pageNumber" style="width: 50px;" type="number" ng-model="paginate.pageNumber"></input> / {{ paginate.totalPages }}
+    <button ng-click="paginate.plusPageNumber()" class="btn btn-dark btn-sm">Tiến</button>
 
-<div class="overlay" ng-show="showCategory">
-  <div class="popup">
-    <h3>Danh mục của sản phẩm</h3>
-    <table border="0" style="display: flex; justify-content: center;">
-      <tr ng-repeat="category in categories" ng-if="productNow.categoryIds.includes(category.id)">
-        <td>
-          <span style="font-weight: bold; color: blue;">{{ category.name }}</span>
-        </td>
-      </tr>
-    </table>
-    <button ng-click="closePopupCategory()">Đóng</button>
-  </div>
-</div>
 
-<div class="overlay" ng-show="showTax">
-  <div class="popup">
-    <h3>Thuế của sản phẩm</h3>
-    <table border="0" style="display: flex; justify-content: center;">
-      <tr ng-repeat="tax in taxes" ng-if="tax.isDefault || productNow.privateTaxIds.includes(tax.id)">
-        <td>
-          {{ tax.name }} - {{ tax.rate * 100 }} %
-          <span ng-if="tax.isDefault"> (thuế chung) </span>
-        </td>
-      </tr>
-    </table>
-    
-    <h4>Giá sau thuế: {{ productNow.priceAfterTax }}</h4>
-    <button ng-click="closePopupTax()">Đóng</button>
-  </div>
-</div>
+<div ng-include="templateDescription"></div>
 
-<style>
-  .overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-.popup {
-  background: white;
-  padding: 20px;
-  border-radius: 6px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.3);
-}
-</style>
+<div ng-include="templateDynamicAttribute"></div>
+
+<div ng-include="templateCategory"></div>
+
+<div ng-include="templateTax"></div>
+
+<div ng-include="templateCreate"></div>
+
+<div ng-include="templateUpdate"></div>
+
+<div ng-include="templateDelete"></div>

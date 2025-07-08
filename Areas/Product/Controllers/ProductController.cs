@@ -26,25 +26,44 @@ public class ProductController : Controller
         _userManager = userManager;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pageNumber, int limit)
     {
         try
         {
             var user = await _userManager.GetUserAsync(User);
-
-            var products = await _dbContext.Products.Where(p => p.UserId == user.Id)
+            List<ProductModel> products;
+            if (pageNumber > 0 && limit > 0)
+            {
+                products = await _dbContext.Products.Where(p => p.UserId == user.Id)
+                                                    .Include(p => p.CategoryProducts)
+                                                    .Include(p => p.AttributeProducts)
+                                                    .Include(p => p.TaxProducts)
+                                                    .Skip((pageNumber - 1) * limit)
+                                                    .Take(limit)
+                                                    .ToListAsync();
+            }
+            else
+            {
+                products = await _dbContext.Products.Where(p => p.UserId == user.Id)
                                                     .Include(p => p.CategoryProducts)
                                                     .Include(p => p.AttributeProducts)
                                                     .Include(p => p.TaxProducts)
                                                     .ToListAsync();
+            }
+
+            int totalProducts = await _dbContext.Products.CountAsync();
 
             List<ProductVM> productVMs = new List<ProductVM>();
 
-            if (products.Count > 0)
+            if (products?.Count > 0)
             {
                 productVMs = products.Select(p => GetProductVMFromProductModel(p)).ToList();
             }
-            return Ok(productVMs);
+            return Ok(new
+            {
+                products = productVMs,
+                totalProducts = totalProducts
+            });
             //return View(productVMs);
         }
         catch
@@ -93,8 +112,17 @@ public class ProductController : Controller
     }
 
     [HttpPost("create")]
-    public async Task<IActionResult> Create(ProductVM productVM)
+    public async Task<IActionResult> Create([FromBody] ProductVM productVM)
     {
+        foreach (var entry in ModelState)
+    {
+        var key = entry.Key;
+        var errors = entry.Value.Errors;
+        foreach (var error in errors)
+        {
+            Console.WriteLine($"Lỗi tại '{key}': {error.ErrorMessage}");
+        }
+    }
         try
         {
             if (ModelState.IsValid)
@@ -157,7 +185,7 @@ public class ProductController : Controller
     }
 
     [HttpPost("update/{id}")]
-    public async Task<IActionResult> Update(int id, ProductVM productVM)
+    public async Task<IActionResult> Update(int id, [FromBody] ProductVM productVM)
     {
         Console.WriteLine("NULL PR");
         try
@@ -188,7 +216,7 @@ public class ProductController : Controller
 
     }
 
-    [HttpGet("delete/{id}")]
+    [HttpPost("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         try
@@ -197,12 +225,12 @@ public class ProductController : Controller
             ProductModel productDelete = await _dbContext.Products.Where(p => p.Id == id && p.UserId == user.Id).FirstOrDefaultAsync();
             if (productDelete != null)
             {
+                await DeleteRelations(productDelete.Id);
                 _dbContext.Products.Remove(productDelete);
                 await _dbContext.SaveChangesAsync();
-                await DeleteRelations(productDelete.Id);
             }
         }
-        catch { }
+        catch { throw; }
         return RedirectToAction("Index");
     }
 
@@ -216,7 +244,8 @@ public class ProductController : Controller
         productVM.IsActive = product.IsActive;
         productVM.Price = product.Price;
         productVM.Discount = product.Discount;
-
+        productVM.CreatedAt = product.CreatedAt.ToString("dd-MM-yyyy");
+        productVM.UpdatedAt = product.UpdatedAt.ToString("dd-MM-yyyy");
 
         if (product.CategoryProducts != null)
         {
@@ -336,7 +365,7 @@ public class ProductController : Controller
     private async Task DeleteRelations(int id)
     {
         await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM CategoryProducts WHERE ProductId = {0}", id);
-        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM AttributeValues WHERE ProductId = {0}", id);
+        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM DynamicAttributeValues WHERE ProductId = {0}", id);
         await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM OrderProducts WHERE ProductId = {0}", id);
         await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM TaxProducts WHERE ProductId = {0}", id);
     }

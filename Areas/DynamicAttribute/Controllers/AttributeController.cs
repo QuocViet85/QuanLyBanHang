@@ -9,7 +9,7 @@ using WebBanHang.Data;
 namespace WebBanHang.Areas.DynamicAttribute.Controllers;
 
 [Area("DynamicAttribute")]
-[Route("attribute")]
+[Route("api/dynamicattribute")]
 [Authorize]
 public class AttributeController : Controller
 {
@@ -44,7 +44,7 @@ public class AttributeController : Controller
             {
                 attributeVMs = attributes.Select(a => GetAttributeVMFromAttribute(a)).ToList();
             }
-            return View(attributeVMs);
+            return Ok(attributeVMs);
         }
         catch { }
         return null;

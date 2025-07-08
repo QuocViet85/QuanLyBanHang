@@ -32,4 +32,7 @@ public class ProductVM
     public List<int>? PrivateTaxIds { set; get; } = new List<int>();
 
     public Dictionary<int, string>? DynamicAttributes { set; get; } = new Dictionary<int, string>();
+
+    public string? CreatedAt { set; get; }
+    public string? UpdatedAt { set; get; }
 }

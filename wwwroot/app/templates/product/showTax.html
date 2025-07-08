@@ -1,0 +1,16 @@
+<div class="overlay" ng-show="showPopupTax">
+  <div class="popup">
+    <h3>Thuế của sản phẩm</h3>
+    <table border="0" style="display: flex; justify-content: center;">
+      <tr ng-repeat="tax in productNow.taxes">
+        <td>
+          {{ tax.name }} - {{ tax.rate * 100 }} %
+          <span ng-if="tax.isDefault"> (thuế chung) </span>
+        </td>
+      </tr>
+    </table>
+    
+    <h4>Giá sau thuế: {{ productNow.priceAfterTax }}</h4>
+    <button class="btn btn-danger" ng-click="closePopupTax()">Đóng</button>
+  </div>
+</div>

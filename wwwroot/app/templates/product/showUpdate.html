@@ -1,0 +1,54 @@
+<div class="overlay" ng-if="showPopupUpdate">
+  <div class="popup">
+    <h3>Sửa sản phẩm</h3>
+    <table>
+        <tr>
+            <td>Tên: </td>
+            <td><input type="text" id="name" value="{{ productNow.name }}"></td>
+        </tr>
+        <tr>
+            <td>Số lượng: </td>
+            <td><input type="number" id="quantity" value="{{ productNow.quantity }}"></td>
+        </tr>
+        <tr>
+            <td>Giá: </td>
+            <td><input type="number" id="price" value="{{ productNow.price }}"></td>
+        </tr>
+        <tr>
+            <td>Giảm giá: </td>
+            <td><input type="number" id="discount" value="{{ productNow.discount }}"></td>
+        </tr>
+        <tr>
+            <td>Mô tả: </td>
+            <td><textarea id="description">{{ productNow.description }}</textarea></td>
+        </tr>
+        <tr ng-repeat="attribute in dynamicAttributes">
+            <td>{{ attribute.name }}</td>
+            <td>
+                <input type="text" id="dA{{ attribute.id }}" class="dynamicAttributes" value="{{ productNow.dynamicAttributes[attribute.id] }}">
+            </td>
+        </tr>
+        <tr>
+            <td>Danh mục:</td>
+            <td>
+                <span ng-repeat="category in categories">
+                    <label for="">{{ category.name }}</label>
+                    <input class="categoryIds" type="checkbox" value="{{ category.id }}" ng-checked="productNow.categoryIds.includes(category.id)" /> |
+                </span>
+            </td>
+        </tr>
+        <tr>
+            <td>Thuế:</td>
+            <td>
+                <span ng-repeat="tax in taxes" ng-if="!tax.isDefault">
+                    <label for="">{{ tax.name }}</label>
+                    <input class="privateTaxIds" type="checkbox" value="{{ tax.id }}" ng-checked="productNow.privateTaxIds.includes(tax.id)"/> |
+                </span>
+            </td>
+        </tr>
+    </table>
+
+    <button ng-click="updateProduct()" class="btn btn-warning">Sửa sản phẩm</button>
+    <button class="btn btn-danger" ng-click="closePopupUpdate()">Đóng</button>
+  </div>
+</div>

@@ -1,0 +1,16 @@
+<div class="overlay" ng-show="showPopupDynamicAttribute">
+  <div class="popup">
+    <h3>Thuộc tính động của sản phẩm</h3>
+    <table border="0" style="display: flex; justify-content: center;">
+      <tr ng-repeat="(key, value) in productNow.dynamicAttributes">
+        <td>
+          <span style="font-weight: bold;">{{ key }} :</span>
+        </td>
+        <td>
+          {{ value }}
+        </td>
+      </tr>
+    </table>
+    <button class="btn btn-danger" ng-click="closePopupDynamicAttribute()">Đóng</button>
+  </div>
+</div>
