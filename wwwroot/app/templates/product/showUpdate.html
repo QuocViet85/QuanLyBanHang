@@ -13,6 +13,7 @@
         <tr>
             <td>Giá: </td>
             <td><input type="number" id="price" value="{{ productNow.price }}"></td>
+            <!-- Dùng value không dùng ng-model để trong trường hợp không ấn sửa và tắt đi bật lại popup thì vẫn hiển thị giá trị ban đầu đúng với server -->
         </tr>
         <tr>
             <td>Giảm giá: </td>
@@ -48,7 +49,7 @@
         </tr>
     </table>
 
-    <button ng-click="updateProduct()" class="btn btn-warning">Sửa sản phẩm</button>
+    <button ng-click="updateProduct()" class="btn btn-warning">Sửa</button>
     <button class="btn btn-danger" ng-click="closePopupUpdate()">Đóng</button>
   </div>
 </div>

@@ -1,0 +1,8 @@
+<div class="overlay" ng-if="showPopupDelete">
+  <div class="popup">
+    <h3>Xác nhận thuế</h3>
+    <p>{{ taxNow.name }}</p>
+    <button class="btn btn-danger" ng-click="deleteTax()">Xóa</button>
+    <button class="btn btn-danger" ng-click="closePopupDelete()">Đóng</button>
+  </div>
+</div>

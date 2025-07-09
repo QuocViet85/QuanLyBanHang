@@ -1,0 +1,22 @@
+<div class="overlay" ng-if="showPopupCreate">
+  <div class="popup">
+    <h3>Tạo khách hàng</h3>
+    <table>
+        <tr>
+            <td>Tên: </td>
+            <td><input type="text" id="name"></td>
+        </tr>
+        <tr>
+            <td>Số điện thoại: </td>
+            <td><input type="number" id="phoneNumber"></td>
+        </tr>
+        <tr>
+            <td>Địa chỉ: </td>
+            <td><input type="text" id="address"></td>
+        </tr>
+    </table>
+
+    <button ng-click="createCustomer()" class="btn btn-primary">Tạo</button>
+    <button class="btn btn-danger" ng-click="closePopupCreate()">Đóng</button>
+  </div>
+</div>

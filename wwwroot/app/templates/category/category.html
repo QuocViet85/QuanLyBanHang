@@ -1,58 +1,35 @@
-<h2>Danh sách sản phẩm</h2>
-<button type="button" class="btn btn-primary text-left" ng-click="openPopupCreate()">Tạo sản phẩm</button>
+<h2>Danh sách danh mục sản phẩm</h2>
+<button type="button" class="btn btn-primary text-left" ng-click="openPopupCreate()">Tạo danh mục</button>
 
 <table class="table">
   <thead>
     <tr>
       <th scope="col">Stt</th>
       <th scope="col">Tên</th>
-      <th scope="col">Số lượng</th>
-      <th scope="col">Đang Bán</th>
-      <th scope="col">Giá</th>
-      <th scope="col">Giảm giá</th>
       <th scope="col">Ngày thêm</th>
       <th scope="col">Ngày sửa</th>
-      <th scope="col"></th>
-      <th scope="col"></th>
-      <th scope="col"></th>
       <th scope="col"></th>
       <th scope="col"></th>
       <th scope="col"></th>
     </tr>
   </thead>
   <tbody>
-    <tr ng-repeat="(key, item) in products">
+    <tr ng-repeat="(key, item) in categories">
       <th scope="row">{{ key + 1 }}</th>
       <td>{{ item.name }}</td>
-      <td>{{ item.quantity }}</td>
-      <td>{{ item.isActive ? "Có" : "Không" }}</td>
-      <td>{{ item.price }}</td>
-      <td>{{ item.discount }}</td>
       <td>{{ item.createdAt }}</td>
       <td>{{ item.updatedAt }}</td>
       <td><button ng-click="openPopupDescription(item)" class="btn btn-info" href="">Xem mô tả</button></td>
-      <td><button ng-click="openPopupDynamicAttribute(item)" class="btn btn-dark" href="">Các thuộc tính động</button></td>
-      <td><a ng-click="openPopupCategory(item)" class="btn btn-primary" href="">Danh mục</a></td>
-      <td><a ng-click="openPopupTax(item)" class="btn btn-success" href="">Thuế</a></td>
       <td><a ng-click="openPopupUpdate(item)" class="btn btn-warning" href="">Sửa</a></td>
       <td><a ng-click="openPopupDelete(item)" class="btn btn-danger" href="">Xóa</a></td>
     </tr>
   </tbody>
 </table>
-
-
     <button ng-click="paginate.minusPageNumber()" class="btn btn-dark btn-sm">Lùi</button>
     <input id="pageNumber" style="width: 50px;" type="number" ng-model="paginate.pageNumber"></input> / {{ paginate.totalPages }}
     <button ng-click="paginate.plusPageNumber()" class="btn btn-dark btn-sm">Tiến</button>
 
-
 <div ng-include="templateDescription"></div>
-
-<div ng-include="templateDynamicAttribute"></div>
-
-<div ng-include="templateCategory"></div>
-
-<div ng-include="templateTax"></div>
 
 <div ng-include="templateCreate"></div>
 

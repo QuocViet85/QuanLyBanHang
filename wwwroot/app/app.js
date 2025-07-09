@@ -10,6 +10,22 @@ app.config(['$routeProvider', function($routeProvider) {
       templateUrl: window.location.origin + '/app/templates/product/product.html',
       controller: 'productController'
     })
+    .when('/category', {
+      templateUrl: window.location.origin + '/app/templates/category/category.html',
+      controller: 'categoryController'
+    })
+    .when('/dynamicattribute', {
+      templateUrl: window.location.origin + '/app/templates/dynamicAttribute/dynamicAttribute.html',
+      controller: 'dynamicAttributeController'
+    })
+    .when('/tax', {
+      templateUrl: window.location.origin + '/app/templates/tax/tax.html',
+      controller: 'taxController'
+    })
+    .when('/customer', {
+      templateUrl: window.location.origin + '/app/templates/customer/customer.html',
+      controller: 'customerController'
+    })
 }]);
 
 

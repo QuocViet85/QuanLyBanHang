@@ -1,0 +1,34 @@
+<div class="overlay" ng-if="showPopupCreate">
+  <div class="popup">
+    <h3>Tạo thuế</h3>
+    <table>
+        <tr>
+            <td>Tên: </td>
+            <td><input type="text" id="name"></td>
+        </tr>
+        <tr>
+            <td>Mức thuế (%): </td>
+            <td><input type="number" id="rate"></td>
+        </tr>
+        <tr>
+            <td>Mã thuế: </td>
+            <td><input type="text" id="code"></td>
+        </tr>
+        <tr>
+            <td>Ghi chú: </td>
+            <td><textarea id="description"></textarea></td>
+        </tr>
+        <tr>
+            <td>Đang hoạt động: </td>
+            <td><input type="checkbox" id="isActive"></td>
+        </tr>
+        <tr>
+            <td>Mặc định: </td>
+            <td><input type="checkbox" id="isDefault"></td>
+        </tr>
+    </table>
+
+    <button ng-click="createTax()" class="btn btn-primary">Tạo</button>
+    <button class="btn btn-danger" ng-click="closePopupCreate()">Đóng</button>
+  </div>
+</div>

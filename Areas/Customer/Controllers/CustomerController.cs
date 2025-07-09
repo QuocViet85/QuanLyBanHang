@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 namespace WebBanHang.Areas.Customer.Controllers;
 
 [Area("Customer")]
-[Route("customer")]
+[Route("api/customer")]
 [Authorize]
 public class CustomerController : Controller
 {
@@ -21,53 +21,45 @@ public class CustomerController : Controller
         _userManager = userManager;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pageNumber, int limit)
     {
         try
         {
             var user = await _userManager.GetUserAsync(User);
 
-            var customers = await _dbContext.Customers.Where(c => c.UserId == user.Id).ToListAsync();
+            List<CustomerModel> customers;
+
+            if (pageNumber > 0 && limit > 0)
+            {
+                customers = await _dbContext.Customers
+                                            .Skip((pageNumber - 1) * limit)
+                                            .Take(limit)
+                                            .Where(c => c.UserId == user.Id).ToListAsync();
+            }
+            else
+            {
+                customers = await _dbContext.Customers.Where(c => c.UserId == user.Id).ToListAsync();
+            }
+
+            int totalCustomers = await _dbContext.Taxes.CountAsync();
 
             List<CustomerVM> customerVMs = new List<CustomerVM>();
 
-            if (customers.Count > 0)
+            if (customers?.Count > 0)
             {
                 customerVMs = customers.Select(c => GetCustomerVMFromCustomerModel(c)).ToList();
             }
-            return View(customerVMs);
-        }
-        catch { }
-        return null;
-    }
-
-    [HttpGet("detail/{id}")]
-    public async Task<IActionResult> Detail(int id)
-    {
-        try
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var customer = await _dbContext.Customers.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (customer != null)
+            return Ok(new
             {
-                var customerVM = GetCustomerVMFromCustomerModel(customer);
-                return View(customerVM);
-            }
+                customers = customerVMs,
+                totalCustomers = totalCustomers
+            });
         }
-        catch { }
-        return null;
-    }
-
-    [HttpGet("create")]
-    public IActionResult Create()
-    {
-        return View();
+        catch { return BadRequest("Lấy khách hàng thất bại"); }
     }
 
     [HttpPost("create")]
-    public async Task<IActionResult> Create(CustomerVM customerVM)
+    public async Task<IActionResult> Create([FromBody] CustomerVM customerVM)
     {
         try
         {
@@ -85,56 +77,52 @@ public class CustomerController : Controller
 
                 await _dbContext.Customers.AddAsync(customerModel);
                 await _dbContext.SaveChangesAsync();
+
+                return Ok("Tạo khách hàng thành công");
             }
-        }
-        catch { }
-        return RedirectToAction("Create");
-    }
-
-    [HttpGet("update/{id}")]
-    public async Task<IActionResult> Update(int id)
-    {
-        try
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var customerUpdate = await _dbContext.Customers.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (customerUpdate != null)
+            else
             {
-                var customerVMUpdate = GetCustomerVMFromCustomerModel(customerUpdate);
-                return View(customerVMUpdate);
+                return BadRequest("Thông tin nhập vào không hợp lệ");
             }
         }
-        catch { }
-
-        return null;
+        catch { return BadRequest("Tạo khách hàng thất bại"); }
     }
 
     [HttpPost("update/{id}")]
-    public async Task<IActionResult> Update(int id, CustomerVM customerVM)
+    public async Task<IActionResult> Update(int id, [FromBody] CustomerVM customerVM)
     {
         try
         {
-            var user = await _userManager.GetUserAsync(User);
-            var customerUpdate = await _dbContext.Customers.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (customerUpdate != null)
+            if (ModelState.IsValid)
             {
-                customerUpdate.Name = customerVM.Name;
-                customerUpdate.PhoneNumber = customerVM.PhoneNumber;
-                customerUpdate.Address = customerVM.Address;
+                var user = await _userManager.GetUserAsync(User);
+                var customerUpdate = await _dbContext.Customers.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
 
-                _dbContext.Customers.Update(customerUpdate);
-                int result = await _dbContext.SaveChangesAsync();
+                if (customerUpdate != null)
+                {
+                    customerUpdate.Name = customerVM.Name;
+                    customerUpdate.PhoneNumber = customerVM.PhoneNumber;
+                    customerUpdate.Address = customerVM.Address;
+
+                    _dbContext.Customers.Update(customerUpdate);
+                    int result = await _dbContext.SaveChangesAsync();
+
+                    return Ok("Cập nhật khách hàng thành công");
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            else
+            {
+                return BadRequest("Thông tin nhập vào không hợp lệ");
             }
         }
-        catch { }
-
-        return RedirectToAction("Update", new { id = id });
+        catch { return BadRequest("Cập nhật khách hàng thất bại"); }
     }
 
-    [HttpGet("delete/{id}")]
+    [HttpPost("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         try
@@ -145,10 +133,15 @@ public class CustomerController : Controller
             {
                 _dbContext.Customers.Remove(customerDelete);
                 int result = await _dbContext.SaveChangesAsync();
+
+                return Ok("Xóa khách hàng thành công");
+            }
+            else
+            {
+                throw new Exception();
             }
         }
-        catch { }
-        return RedirectToAction("Index");
+        catch { return BadRequest("Xóa khách hàng thất bại"); }
     }
 
     private CustomerVM GetCustomerVMFromCustomerModel(CustomerModel customer)

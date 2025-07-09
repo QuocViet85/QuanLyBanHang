@@ -1,0 +1,36 @@
+<h2>Danh sách khách hàng</h2>
+<button type="button" class="btn btn-primary text-left" ng-click="openPopupCreate()">Tạo khách hàng</button>
+
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">Stt</th>
+      <th scope="col">Tên</th>
+      <th scope="col">Số điện thoại</th>
+      <th scope="col">Địa chỉ</th>
+      <td scope="col"></td>
+      <td scope="col"></td>
+    </tr>
+  </thead>
+  <tbody>
+    <tr ng-repeat="(key, item) in customers">
+      <th scope="row">{{ key + 1 }}</th>
+      <td>{{ item.name }}</td>
+      <td>0{{ item.phoneNumber }}</td>
+      <td>{{ item.address }}</td>
+      <td><a ng-click="openPopupUpdate(item)" class="btn btn-warning" href="">Sửa</a></td>
+      <td><a ng-click="openPopupDelete(item)" class="btn btn-danger" href="">Xóa</a></td>
+    </tr>
+  </tbody>
+</table>
+
+    <button ng-click="paginate.minusPageNumber()" class="btn btn-dark btn-sm">Lùi</button>
+    <input id="pageNumber" style="width: 50px;" type="number" ng-model="paginate.pageNumber"></input> / {{ paginate.totalPages }}
+    <button ng-click="paginate.plusPageNumber()" class="btn btn-dark btn-sm">Tiến</button>
+
+
+<div ng-include="templateCreate"></div>
+
+<div ng-include="templateUpdate"></div>
+
+<div ng-include="templateDelete"></div>

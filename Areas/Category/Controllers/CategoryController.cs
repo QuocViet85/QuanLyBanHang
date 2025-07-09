@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Client.Extensibility;
 using WebBanHang.Areas.Category.Model;
 using WebBanHang.Areas.Category.ViewModel;
 using WebBanHang.Data;
@@ -22,55 +23,45 @@ public class CategoryController : Controller
         _userManager = userManager;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pageNumber, int limit)
     {
         try
         {
             var user = await _userManager.GetUserAsync(User);
 
-            var categories = await _dbContext.Categories.Where(c => c.UserId == user.Id).ToListAsync();
+            List<CategoryModel> categories;
+
+            if (pageNumber > 0 && limit > 0)
+            {
+                categories = await _dbContext.Categories.Where(c => c.UserId == user.Id)
+                                                        .Skip((pageNumber - 1) * limit)
+                                                        .Take(limit)
+                                                        .ToListAsync(); 
+            }
+            else
+            {
+                categories = await _dbContext.Categories.Where(c => c.UserId == user.Id).ToListAsync();
+            }
+
+            int totalCategories = await _dbContext.Categories.CountAsync();
 
             List<CategoryVM> categoryVMs = new List<CategoryVM>();
 
-            if (categories.Count > 0)
+            if (categories?.Count > 0)
             {
                 categoryVMs = categories.Select(c => GetCategoryVMFromCategoryModel(c)).ToList();
             }
-            return Ok(categoryVMs);
-        }
-        catch { }
-
-        return null;
-    }
-
-    [HttpGet("detail/{id}")]
-    public async Task<IActionResult> Detail(int id)
-    {
-        try
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var category = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (category != null)
+            return Ok(new
             {
-                var categoryVM = GetCategoryVMFromCategoryModel(category);
-                return View(categoryVM);
-            }
+                categories = categoryVMs,
+                totalCategories = totalCategories
+            });
         }
-        catch { }
-
-        return null;
-    }
-
-    [HttpGet("create")]
-    public IActionResult Create()
-    {
-        return View();
+        catch { throw new Exception("Lấy danh mục sản phẩm thất bại"); }
     }
 
     [HttpPost("create")]
-    public async Task<IActionResult> Create(CategoryVM categoryVM)
+    public async Task<IActionResult> Create([FromBody] CategoryVM categoryVM)
     {
         try
         {
@@ -89,55 +80,53 @@ public class CategoryController : Controller
 
                 await _dbContext.Categories.AddAsync(categoryModel);
                 await _dbContext.SaveChangesAsync();
+
+                return Ok("Tạo danh mục sản phẩm thành công");
             }
-        }
-        catch { }
-        return RedirectToAction("Create");
-    }
-
-    [HttpGet("update/{id}")]
-    public async Task<IActionResult> Update(int id)
-    {
-        try
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var categoryUpdate = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (categoryUpdate != null)
+            else
             {
-                var categoryVMUpdate = GetCategoryVMFromCategoryModel(categoryUpdate);
-                return View(categoryVMUpdate);
+                return BadRequest("Thông tin nhập vào không hợp lệ");
             }
         }
-        catch { }
-
-        return null;
+        catch { return BadRequest("Tạo danh mục sản phẩm thất bại"); }
     }
 
     [HttpPost("update/{id}")]
-    public async Task<IActionResult> Update(int id, CategoryVM categoryVM)
+    public async Task<IActionResult> Update(int id, [FromBody] CategoryVM categoryVM)
     {
         try
         {
-            var user = await _userManager.GetUserAsync(User);
-            CategoryModel categoryUpdate = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (categoryUpdate != null)
+            if (ModelState.IsValid)
             {
-                categoryUpdate.Name = categoryVM.Name;
-                categoryUpdate.Description = categoryVM.Description;
-                categoryUpdate.UpdatedAt = DateTime.Now;
+                var user = await _userManager.GetUserAsync(User);
+                CategoryModel categoryUpdate = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
 
-                _dbContext.Categories.Update(categoryUpdate);
-                int result = await _dbContext.SaveChangesAsync();
+                if (categoryUpdate != null)
+                {
+                    categoryUpdate.Name = categoryVM.Name;
+                    categoryUpdate.Description = categoryVM.Description;
+                    categoryUpdate.UpdatedAt = DateTime.Now;
+
+                    _dbContext.Categories.Update(categoryUpdate);
+                    int result = await _dbContext.SaveChangesAsync();
+
+                    return Ok("Cập nhật danh mục sản phẩm thành công");
+                }
+                else
+                {
+                    throw new Exception();
+                }
             }
+            else
+            {
+                return BadRequest("Thông tin nhập vào không hợp lệ");
+            }
+            
         }
-        catch { }
-        return RedirectToAction("Update", new { id = id });
+        catch { return BadRequest("Cập nhật danh mục sản phẩm thất bại"); }
     }
 
-    [HttpGet("delete/{id}")]
+    [HttpPost("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         try
@@ -148,10 +137,15 @@ public class CategoryController : Controller
             {
                 _dbContext.Categories.Remove(categoryDelete);
                 int result = await _dbContext.SaveChangesAsync();
+
+                return Ok("Xóa danh mục sản phẩm thành công");
+            }
+            else
+            {
+                throw new Exception();
             }
         }
-        catch { }
-        return RedirectToAction("Index");
+        catch { return BadRequest("Xóa danh mục sản phẩm thất bại"); }
     }
 
     private CategoryVM GetCategoryVMFromCategoryModel(CategoryModel category)
@@ -160,7 +154,9 @@ public class CategoryController : Controller
         {
             Id = category.Id,
             Name = category.Name,
-            Description = category.Description
+            Description = category.Description,
+            CreatedAt = category.CreatedAt,
+            UpdatedAt = category.UpdatedAt
         };
     }
 }

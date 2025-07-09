@@ -22,62 +22,45 @@ public class AttributeController : Controller
         _userManager = userManager;
     }
 
-    private AttributeVM GetAttributeVMFromAttribute(AttributeModel attribute)
-    {
-        return new AttributeVM()
-        {
-            Id = attribute.Id,
-            Name = attribute.Name
-        };
-    }
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pageNumber, int limit)
     {
         try
         {
             var user = await _userManager.GetUserAsync(User);
 
-            var attributes = await _dbContext.Attributes.Where(a => a.UserId == user.Id).ToListAsync();
+            List<AttributeModel> attributes;
+
+            if (pageNumber > 0 && limit > 0)
+            {
+                attributes = await _dbContext.Attributes.Where(a => a.UserId == user.Id)
+                                                        .Skip((pageNumber - 1) * limit)
+                                                        .Take(limit)
+                                                        .ToListAsync();
+            }
+            else
+            {
+                attributes = await _dbContext.Attributes.Where(a => a.UserId == user.Id).ToListAsync();
+            }
+
+            int totalDynamicAttributes = await _dbContext.Attributes.CountAsync();
 
             List<AttributeVM> attributeVMs = new List<AttributeVM>();
 
-            if (attributes.Count > 0)
+            if (attributes?.Count > 0)
             {
                 attributeVMs = attributes.Select(a => GetAttributeVMFromAttribute(a)).ToList();
             }
-            return Ok(attributeVMs);
-        }
-        catch { }
-        return null;
-    }
-
-    [HttpGet("detail/{id}")]
-    public async Task<IActionResult> Detail(int id)
-    {
-        try
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var attribute = await _dbContext.Attributes.Where(a => a.Id == id && a.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (attribute != null)
+            return Ok(new
             {
-                var attributeVM = GetAttributeVMFromAttribute(attribute);
-                return View(attributeVM);
-            }
+                dynamicAttributes = attributeVMs,
+                totalDynamicAttributes = totalDynamicAttributes
+            });
         }
-        catch { }
-        return null;
-
-    }
-
-    [HttpGet("create")]
-    public IActionResult Create()
-    {
-        return View();
+        catch { return BadRequest("Lấy thuộc tính động thất bại"); }
     }
 
     [HttpPost("create")]
-    public async Task<IActionResult> Create(AttributeVM attributeVM)
+    public async Task<IActionResult> Create([FromBody] AttributeVM attributeVM)
     {
         try
         {
@@ -94,56 +77,51 @@ public class AttributeController : Controller
                 await _dbContext.Attributes.AddAsync(attributeModel);
                 await _dbContext.SaveChangesAsync();
 
-                return RedirectToAction("Create");
+                return Ok("Tạo thuộc tính động thành công");
             }
-            return View();
-        }
-        catch { }
-        return View();
-    }
-
-    [HttpGet("update/{id}")]
-    public async Task<IActionResult> Update(int id)
-    {
-        try
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var attributeUpdate = await _dbContext.Attributes.Where(a => a.Id == id && a.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (attributeUpdate != null)
+            else
             {
-                var AttributeVMUpdate = GetAttributeVMFromAttribute(attributeUpdate);
-
-                return View(AttributeVMUpdate);
+                return BadRequest("Thông tin nhập vào không hợp lệ");
             }
         }
-        catch { }
-
-        return null;
+        catch { return BadRequest("Tạo thuộc tính động thất bại"); }
     }
+
 
     [HttpPost("update/{id}")]
-    public async Task<IActionResult> Update(int id, AttributeVM AttributeVM)
+    public async Task<IActionResult> Update(int id, [FromBody] AttributeVM AttributeVM)
     {
         try
         {
-            var user = await _userManager.GetUserAsync(User);
-            var attributeUpdate = await _dbContext.Attributes.Where(a => a.Id == id && a.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (attributeUpdate != null)
+            if (ModelState.IsValid)
             {
-                attributeUpdate.Name = AttributeVM.Name;
+                var user = await _userManager.GetUserAsync(User);
+                var attributeUpdate = await _dbContext.Attributes.Where(a => a.Id == id && a.UserId == user.Id).FirstOrDefaultAsync();
 
-                _dbContext.Attributes.Update(attributeUpdate);
-                int result = await _dbContext.SaveChangesAsync();
+                if (attributeUpdate != null)
+                {
+                    attributeUpdate.Name = AttributeVM.Name;
+
+                    _dbContext.Attributes.Update(attributeUpdate);
+                    int result = await _dbContext.SaveChangesAsync();
+
+                    return Ok("Cập nhật thuộc tính động thành công");
+                }
+                else
+                {
+                    throw new Exception();
+                }
             }
+            else
+            {
+                return BadRequest("Thông tin nhập vào không hợp lệ");
+            }
+            
         }
-        catch { }
-        return RedirectToAction("Update", new { id = id });
+        catch { return BadRequest("Cập nhật thuộc tính động thất bại"); }
     }
 
-    [HttpGet("delete/{id}")]
+    [HttpPost("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         try
@@ -154,9 +132,22 @@ public class AttributeController : Controller
             {
                 _dbContext.Attributes.Remove(attributeDelete);
                 int result = await _dbContext.SaveChangesAsync();
+                return Ok("Xóa thuộc tính động thành công");
+            }
+            else
+            {
+                throw new Exception();
             }
         }
-        catch { }
-        return RedirectToAction("Index");
+        catch { return BadRequest("Xóa thuộc tính động thất bại"); }
+    }
+
+    private AttributeVM GetAttributeVMFromAttribute(AttributeModel attribute)
+    {
+        return new AttributeVM()
+        {
+            Id = attribute.Id,
+            Name = attribute.Name
+        };
     }
 }

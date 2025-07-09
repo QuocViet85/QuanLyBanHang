@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -64,65 +65,14 @@ public class ProductController : Controller
                 products = productVMs,
                 totalProducts = totalProducts
             });
-            //return View(productVMs);
         }
         catch
-        { }
-        return null;
-    }
-
-    [HttpGet("detail/{id}")]
-    public async Task<IActionResult> Detail(int id)
-    {
-        try
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var product = await _dbContext.Products.Where(p => p.Id == id && p.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (product != null)
-            {
-                var productVM = GetProductVMFromProductModel(product);
-                return View(productVM);
-            }
-        }
-        catch { }
-
-        return null;
-    }
-
-    [HttpGet("create")]
-    public async Task<IActionResult> Create()
-    {
-        try
-        {
-            var categories = await GetCategories();
-            ViewData["categories"] = categories;
-
-            var attributes = await GetAttributes();
-            ViewData["attributes"] = attributes;
-
-            var privateTaxes = await GetPrivateTaxes();
-            ViewData["privateTaxes"] = privateTaxes;
-
-            return View();
-        }
-        catch { }
-        return null;
+        { return BadRequest("Lấy sản phẩm thất bại"); }
     }
 
     [HttpPost("create")]
     public async Task<IActionResult> Create([FromBody] ProductVM productVM)
     {
-        foreach (var entry in ModelState)
-    {
-        var key = entry.Key;
-        var errors = entry.Value.Errors;
-        foreach (var error in errors)
-        {
-            Console.WriteLine($"Lỗi tại '{key}': {error.ErrorMessage}");
-        }
-    }
         try
         {
             if (ModelState.IsValid)
@@ -134,7 +84,6 @@ public class ProductController : Controller
                     Name = productVM.Name,
                     Description = productVM.Description,
                     Quantity = productVM.Quantity,
-                    IsActive = productVM.IsActive,
                     UserId = user.Id,
                     Price = productVM.Price,
                     Discount = productVM.Discount,
@@ -149,39 +98,16 @@ public class ProductController : Controller
                 await SetCategoryProducts(productModel.Id, productVM.CategoryIds);
                 await SetPrivateTax(productModel.Id, productVM.PrivateTaxIds);
                 await SetAttributeValue(productModel.Id, productVM.DynamicAttributes);
+
+                return Ok("Tạo sản phẩm thành công");
             }
-        }
-        catch { }
-        return RedirectToAction("Create");
-    }
-
-    [HttpGet("update/{id}")]
-    public async Task<IActionResult> Update(int id)
-    {
-        try
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var productUpdate = await _dbContext.Products.Where(p => p.Id == id && p.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (productUpdate != null)
+            else
             {
-                var productVMUpdate = GetProductVMFromProductModel(productUpdate);
-
-                var categories = await GetCategories();
-                ViewData["categories"] = categories;
-
-                var attributes = await GetAttributes();
-                ViewData["attributes"] = attributes;
-
-                var privateTaxes = await GetPrivateTaxes();
-                ViewData["privateTaxes"] = privateTaxes;
-
-                return View(productVMUpdate);
+                return BadRequest("Thông tin nhập vào không hợp lệ");
             }
         }
-        catch { throw; }
-        return null;
+        catch { return BadRequest("Tạo sản phẩm thất bại"); }
+        
     }
 
     [HttpPost("update/{id}")]
@@ -190,30 +116,42 @@ public class ProductController : Controller
         Console.WriteLine("NULL PR");
         try
         {
-            var user = await _userManager.GetUserAsync(User);
-            ProductModel productUpdate = await _dbContext.Products.Where(p => p.Id == id && p.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (productUpdate != null)
+            if (ModelState.IsValid)
             {
+                var user = await _userManager.GetUserAsync(User);
+                ProductModel productUpdate = await _dbContext.Products.Where(p => p.Id == id && p.UserId == user.Id).FirstOrDefaultAsync();
 
-                productUpdate.Name = productVM.Name;
-                productUpdate.Description = productVM.Description;
-                productUpdate.Quantity = productVM.Quantity;
-                productUpdate.IsActive = productVM.IsActive;
-                productUpdate.Price = productVM.Price;
-                productUpdate.Discount = productVM.Discount;
-                productUpdate.UpdatedAt = DateTime.Now;
+                if (productUpdate != null)
+                {
 
-                _dbContext.Products.Update(productUpdate);
-                int result = await _dbContext.SaveChangesAsync();
+                    productUpdate.Name = productVM.Name;
+                    productUpdate.Description = productVM.Description;
+                    productUpdate.Quantity = productVM.Quantity;
+                    productUpdate.Price = productVM.Price;
+                    productUpdate.Discount = productVM.Discount;
+                    productUpdate.UpdatedAt = DateTime.Now;
+
+                    _dbContext.Products.Update(productUpdate);
+                    int result = await _dbContext.SaveChangesAsync();
+
+                    await SetCategoryProducts(productUpdate.Id, productVM.CategoryIds);
+                    await SetPrivateTax(productUpdate.Id, productVM.PrivateTaxIds);
+                    await SetAttributeValue(productUpdate.Id, productVM.DynamicAttributes);
+
+                    return Ok("Cập nhật sản phẩm thành công");
+                }
+                else
+                {
+                    throw new Exception();
+                }
             }
-            await SetCategoryProducts(productUpdate.Id, productVM.CategoryIds);
-            await SetPrivateTax(productUpdate.Id, productVM.PrivateTaxIds);
-            await SetAttributeValue(productUpdate.Id, productVM.DynamicAttributes);
+            else
+            {
+                return BadRequest("Thông tin nhập vào không hợp lệ");
+            }
+            
         }
-        catch {  }
-        return RedirectToAction("Update", new { id = id });
-
+        catch { return BadRequest("Cập nhật sản phẩm thất bại"); }
     }
 
     [HttpPost("delete/{id}")]
@@ -229,9 +167,13 @@ public class ProductController : Controller
                 _dbContext.Products.Remove(productDelete);
                 await _dbContext.SaveChangesAsync();
             }
+            else
+            {
+                throw new Exception();
+            }
         }
-        catch { throw; }
-        return RedirectToAction("Index");
+        catch { return BadRequest("Xóa sản phẩm thất bại"); }
+        return Ok();
     }
 
     private ProductVM GetProductVMFromProductModel(ProductModel product)
@@ -241,7 +183,6 @@ public class ProductController : Controller
         productVM.Name = product.Name;
         productVM.Description = product.Description;
         productVM.Quantity = product.Quantity;
-        productVM.IsActive = product.IsActive;
         productVM.Price = product.Price;
         productVM.Discount = product.Discount;
         productVM.CreatedAt = product.CreatedAt.ToString("dd-MM-yyyy");
@@ -274,14 +215,6 @@ public class ProductController : Controller
         return productVM;
     }
 
-    private async Task<List<CategoryModel>> GetCategories()
-    {
-        var user = await _userManager.GetUserAsync(User);
-        var categories = await _dbContext.Categories.Include(c => c.CategoryProducts).Where(c => c.UserId == user.Id).ToListAsync();
-
-        return categories;
-    }
-
     private async Task SetCategoryProducts(int productId, List<int> categoryIds)
     {
         await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM CategoryProducts WHERE ProductId = {0}", productId);
@@ -302,12 +235,6 @@ public class ProductController : Controller
         }
     }
 
-    private async Task<List<TaxModel>> GetPrivateTaxes()
-    {
-        var user = await _userManager.GetUserAsync(User);
-        return await _dbContext.Taxes.Include(t => t.TaxProducts).Where(t => !t.IsDefault && t.UserId == user.Id).ToListAsync();
-    }
-
     private async Task SetPrivateTax(int productId, List<int> taxIds)
     {
        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM TaxProducts WHERE ProductId = {0}", productId);
@@ -326,14 +253,6 @@ public class ProductController : Controller
             }
             await _dbContext.SaveChangesAsync();
         }
-    }
-
-    private async Task<List<AttributeModel>> GetAttributes()
-    {
-        var user = await _userManager.GetUserAsync(User);
-        var attributes = await _dbContext.Attributes.Include(c => c.AttributeValues).Where(c => c.UserId == user.Id).ToListAsync();
-
-        return attributes;
     }
 
     private async Task SetAttributeValue(int productId, Dictionary<int, string> dynamicAttributes)

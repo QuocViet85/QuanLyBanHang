@@ -1,0 +1,8 @@
+<div class="overlay" ng-if="showPopupDelete">
+  <div class="popup">
+    <h3>Xác nhận xóa thuộc tính động</h3>
+    <p>{{ dynamicAttributeNow.name }}</p>
+    <button class="btn btn-danger" ng-click="deleteDynamicAttribute()">Xóa</button>
+    <button class="btn btn-danger" ng-click="closePopupDelete()">Đóng</button>
+  </div>
+</div>

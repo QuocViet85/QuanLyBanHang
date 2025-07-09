@@ -12,6 +12,16 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script src="~/lib/angularjs/angular.min.js"></script>
+    <script src="~/lib/angularjs/angular-route.min.js"></script>
+    <script src="~/lib/angularjs/angular-ui-router.min.js"></script>
+    <script src="~/app/app.js"></script>
+    <script src="~/app/controllers/productController.js"></script>
+    <script src="~/app/controllers/categoryController.js"></script>
+    <script src="~/app/controllers/dynamicAttributeController.js"></script>
+    <script src="~/app/controllers/taxController.js"></script>
+    <script src="~/app/controllers/customerController.js"></script>
 </head>
 <body>
     <header>
@@ -27,8 +37,23 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        <li class="nav-item"></li>
+                            <a class="nav-link text-dark" href="/product">Hàng hóa</a>
+                        </li>
+                        <li class="nav-item"></li>
+                            <a class="nav-link text-dark" href="/category">Danh mục</a>
+                        </li>
+                        <li class="nav-item"></li>
+                            <a class="nav-link text-dark" href="/dynamicattribute">Thuộc tính động</a>
+                        </li>
+                        <li class="nav-item"></li>
+                            <a class="nav-link text-dark" href="/order">Hóa đơn</a>
+                        </li>
+                        <li class="nav-item"></li>
+                            <a class="nav-link text-dark" href="/tax">Thuế</a>
+                        </li>
+                        <li class="nav-item"></li>
+                            <a class="nav-link text-dark" href="/customer">Khách hàng</a>
                         </li>
                     </ul>
                     <partial name="_LoginPartial" />

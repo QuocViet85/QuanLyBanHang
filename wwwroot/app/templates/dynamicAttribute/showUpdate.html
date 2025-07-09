@@ -1,0 +1,14 @@
+<div class="overlay" ng-if="showPopupUpdate">
+  <div class="popup">
+    <h3>Sửa thuộc tính động</h3>
+    <table>
+        <tr>
+            <td>Tên: </td>
+            <td><input type="text" id="name" value="{{ dynamicAttributeNow.name }}"></td>
+        </tr>
+    </table>
+
+    <button ng-click="updateDynamicAttribute()" class="btn btn-warning">Sửa</button>
+    <button class="btn btn-danger" ng-click="closePopupUpdate()">Đóng</button>
+  </div>
+</div>

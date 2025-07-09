@@ -1,173 +1,169 @@
-const GLOBAL_VARIABLE = {};
-
+const VARIABLE_PRODUCT = {};
 app.controller("productController", [
   "$scope",
   "$http",
   function ($scope, $http) {
-    GLOBAL_VARIABLE.scope = $scope;
-    GLOBAL_VARIABLE.http = $http;
+    VARIABLE_PRODUCT.scope = $scope;
+    VARIABLE_PRODUCT.http = $http;
     $scope.products = [];
     $scope.productNow = null;
     $scope.categories = [];
     $scope.taxes = [];
     $scope.dynamicAttributes = [];
 
-    
-    handlePaginate();
+    handlePaginateProduct();
     fetchProducts();
     fetchAllCategories();
     fetchAllTaxes();
     fetAllDynamicAttributes();
 
-    handlePopup();
+    handlePopupProduct();
   },
 ]);
 
-function handlePaginate(totalProducts) {
+function handlePaginateProduct(totalProducts) {
     if (!totalProducts) {
-      GLOBAL_VARIABLE.scope.paginate = {};
-      GLOBAL_VARIABLE.scope.paginate.pageNumber = 1;
-      GLOBAL_VARIABLE.scope.paginate.limit = 10;
+      VARIABLE_PRODUCT.scope.paginate = {};
+      VARIABLE_PRODUCT.scope.paginate.pageNumber = 1;
+      VARIABLE_PRODUCT.scope.paginate.limit = 10;
 
-      GLOBAL_VARIABLE.scope.paginate.minusPageNumber = () => {
-        if (GLOBAL_VARIABLE.scope.paginate.pageNumber > 1) {
-          GLOBAL_VARIABLE.scope.paginate.pageNumber -= 1;
+      VARIABLE_PRODUCT.scope.paginate.minusPageNumber = () => {
+        if (VARIABLE_PRODUCT.scope.paginate.pageNumber > 1) {
+          VARIABLE_PRODUCT.scope.paginate.pageNumber -= 1;
         }else {
-          GLOBAL_VARIABLE.scope.paginate.pageNumber = 1;
+          VARIABLE_PRODUCT.scope.paginate.pageNumber = 1;
         }
         fetchProducts();
       }
 
-      GLOBAL_VARIABLE.scope.paginate.plusPageNumber = () => {
-        GLOBAL_VARIABLE.scope.paginate.pageNumber += 1;
+      VARIABLE_PRODUCT.scope.paginate.plusPageNumber = () => {
+        VARIABLE_PRODUCT.scope.paginate.pageNumber += 1;
         fetchProducts();
       }
     }else {
-      GLOBAL_VARIABLE.scope.paginate.totalPages = Math.ceil(totalProducts / GLOBAL_VARIABLE.scope.paginate.limit);
+      VARIABLE_PRODUCT.scope.paginate.totalPages = Math.ceil(totalProducts / VARIABLE_PRODUCT.scope.paginate.limit);
     }
-    
 }
 
 function fetchProducts() {
-  console.log(GLOBAL_VARIABLE.scope.limit, 'PRODUCT')
-  GLOBAL_VARIABLE.http.get(`api/product?pageNumber=${GLOBAL_VARIABLE.scope.paginate.pageNumber}&limit=${GLOBAL_VARIABLE.scope.paginate.limit}`).then(function (res) {
-    GLOBAL_VARIABLE.scope.products = res.data.products;
-    handlePaginate(+res.data.totalProducts);
+  VARIABLE_PRODUCT.http.get(`api/product?pageNumber=${VARIABLE_PRODUCT.scope.paginate.pageNumber}&limit=${VARIABLE_PRODUCT.scope.paginate.limit}`).then(function (res) {
+    VARIABLE_PRODUCT.scope.products = res.data.products;
+    handlePaginateProduct(+res.data.totalProducts);
   });
 }
 
 function fetchAllCategories() {
-  GLOBAL_VARIABLE.http.get("api/category").then(function (res) {
-    GLOBAL_VARIABLE.scope.categories = res.data;
+  VARIABLE_PRODUCT.http.get("api/category").then(function (res) {
+    VARIABLE_PRODUCT.scope.categories = res.data.categories;
   });
 }
 
 function fetAllDynamicAttributes() {
-  GLOBAL_VARIABLE.http.get("api/dynamicattribute").then(function (res) {
-    GLOBAL_VARIABLE.scope.dynamicAttributes = res.data;
+  VARIABLE_PRODUCT.http.get("api/dynamicattribute").then(function (res) {
+    VARIABLE_PRODUCT.scope.dynamicAttributes = res.data.dynamicAttributes;
   });
 }
 
 function fetchAllTaxes() {
-  GLOBAL_VARIABLE.http.get("api/tax/active").then(function (res) {
-    GLOBAL_VARIABLE.scope.taxes = res.data;
+  VARIABLE_PRODUCT.http.get("api/tax/active").then(function (res) {
+    VARIABLE_PRODUCT.scope.taxes = res.data;
   });
 }
 
-function handlePopup() {
-  setTemplatePopup();
-  handlePopupDescription();
-  handlePopupDynamicAttribute();
-  handlePopupCategory();
-  handlePopupTax();
-  handlePopupCreate();
-  handlePopupUpdate();
-  handlePopupDelete();
+function handlePopupProduct() {
+  setTemplatePopupProduct();
+  handlePopupDescriptionProduct();
+  handlePopup_DynamicAttribute();
+  handlePopup_Category();
+  handlePopup_Tax();
+  handlePopupCreateProduct();
+  handlePopupUpdateProduct();
+  handlePopupDeleteProduct();
 }
 
-function setTemplatePopup() {
-  GLOBAL_VARIABLE.scope.templateDescription =
+function setTemplatePopupProduct() {
+  VARIABLE_PRODUCT.scope.templateDescription =
     window.location.origin + "/app/templates/product/showDescription.html";
-  GLOBAL_VARIABLE.scope.templateCategory =
+  VARIABLE_PRODUCT.scope.templateCategory =
     window.location.origin + "/app/templates/product/showCategory.html";
-  GLOBAL_VARIABLE.scope.templateDynamicAttribute =
+  VARIABLE_PRODUCT.scope.templateDynamicAttribute =
     window.location.origin + "/app/templates/product/showDynamicAttribute.html";
-  GLOBAL_VARIABLE.scope.templateTax =
+  VARIABLE_PRODUCT.scope.templateTax =
     window.location.origin + "/app/templates/product/showTax.html";
-  GLOBAL_VARIABLE.scope.templateCreate =
+  VARIABLE_PRODUCT.scope.templateCreate =
     window.location.origin + "/app/templates/product/showCreate.html";
-  GLOBAL_VARIABLE.scope.templateUpdate =
+  VARIABLE_PRODUCT.scope.templateUpdate =
     window.location.origin + "/app/templates/product/showUpdate.html";
-    GLOBAL_VARIABLE.scope.templateDelete =
+    VARIABLE_PRODUCT.scope.templateDelete =
     window.location.origin + "/app/templates/product/showDelete.html";
 }
 
-function handlePopupDescription() {
-  GLOBAL_VARIABLE.scope.description = null;
-  GLOBAL_VARIABLE.scope.showPopupDescription = false;
+function handlePopupDescriptionProduct() {
+  VARIABLE_PRODUCT.scope.description = null;
+  VARIABLE_PRODUCT.scope.showPopupDescription = false;
 
-  GLOBAL_VARIABLE.scope.openPopupDescription = function (productNow) {
-    GLOBAL_VARIABLE.scope.productNow = productNow;
-    GLOBAL_VARIABLE.scope.showPopupDescription = true;
+  VARIABLE_PRODUCT.scope.openPopupDescription = function (productNow) {
+    VARIABLE_PRODUCT.scope.productNow = productNow;
+    VARIABLE_PRODUCT.scope.showPopupDescription = true;
   };
 
-  GLOBAL_VARIABLE.scope.closePopupDescription = function () {
-    GLOBAL_VARIABLE.scope.description = null;
-    GLOBAL_VARIABLE.scope.showPopupDescription = false;
-  };
-}
-
-function handlePopupDynamicAttribute() {
-  GLOBAL_VARIABLE.scope.dynamicAttributes = null;
-  GLOBAL_VARIABLE.scope.showPopupDynamicAttribute = false;
-
-  GLOBAL_VARIABLE.scope.openPopupDynamicAttribute = function (productNow) {
-    GLOBAL_VARIABLE.scope.productNow = productNow;
-    GLOBAL_VARIABLE.scope.showPopupDynamicAttribute = true;
-  };
-
-  GLOBAL_VARIABLE.scope.closePopupDynamicAttribute = function () {
-    GLOBAL_VARIABLE.scope.dynamicAttributes = null;
-    GLOBAL_VARIABLE.scope.showPopupDynamicAttribute = false;
+  VARIABLE_PRODUCT.scope.closePopupDescription = function () {
+    VARIABLE_PRODUCT.scope.description = null;
+    VARIABLE_PRODUCT.scope.showPopupDescription = false;
   };
 }
 
-function handlePopupCategory() {
-  GLOBAL_VARIABLE.scope.showPopupCategory = false;
-  GLOBAL_VARIABLE.scope.productNow = null;
+function handlePopup_DynamicAttribute() {
+  VARIABLE_PRODUCT.scope.dynamicAttributes = null;
+  VARIABLE_PRODUCT.scope.showPopupDynamicAttribute = false;
 
-  GLOBAL_VARIABLE.scope.openPopupCategory = function (productNow) {
-    GLOBAL_VARIABLE.scope.productNow = productNow;
-    GLOBAL_VARIABLE.scope.showPopupCategory = true;
+  VARIABLE_PRODUCT.scope.openPopupDynamicAttribute = function (productNow) {
+    VARIABLE_PRODUCT.scope.productNow = productNow;
+    VARIABLE_PRODUCT.scope.showPopupDynamicAttribute = true;
   };
 
-  GLOBAL_VARIABLE.scope.closePopupCategory = function () {
-    GLOBAL_VARIABLE.scope.showPopupCategory = false;
-    GLOBAL_VARIABLE.scope.productNow = null;
+  VARIABLE_PRODUCT.scope.closePopupDynamicAttribute = function () {
+    VARIABLE_PRODUCT.scope.dynamicAttributes = null;
+    VARIABLE_PRODUCT.scope.showPopupDynamicAttribute = false;
   };
 }
 
-function handlePopupTax() {
-  GLOBAL_VARIABLE.scope.showPopupTax = false;
-  GLOBAL_VARIABLE.scope.productNow = null;
+function handlePopup_Category() {
+  VARIABLE_PRODUCT.scope.showPopupCategory = false;
+  VARIABLE_PRODUCT.scope.productNow = null;
 
-  GLOBAL_VARIABLE.scope.openPopupTax = function (productNow) {
-    GLOBAL_VARIABLE.scope.productNow = productNow;
-    calculatePriceAfterTax(GLOBAL_VARIABLE.scope.productNow);
-    GLOBAL_VARIABLE.scope.showPopupTax = true;
+  VARIABLE_PRODUCT.scope.openPopupCategory = function (productNow) {
+    VARIABLE_PRODUCT.scope.productNow = productNow;
+    VARIABLE_PRODUCT.scope.showPopupCategory = true;
   };
 
-  GLOBAL_VARIABLE.scope.closePopupTax = function () {
-    GLOBAL_VARIABLE.scope.productNow = null;
-    GLOBAL_VARIABLE.scope.showPopupTax = false;
+  VARIABLE_PRODUCT.scope.closePopupCategory = function () {
+    VARIABLE_PRODUCT.scope.showPopupCategory = false;
+    VARIABLE_PRODUCT.scope.productNow = null;
+  };
+}
+
+function handlePopup_Tax() {
+  VARIABLE_PRODUCT.scope.showPopupTax = false;
+  VARIABLE_PRODUCT.scope.productNow = null;
+
+  VARIABLE_PRODUCT.scope.openPopupTax = function (productNow) {
+    VARIABLE_PRODUCT.scope.productNow = productNow;
+    calculatePriceAfterTax(VARIABLE_PRODUCT.scope.productNow);
+    VARIABLE_PRODUCT.scope.showPopupTax = true;
+  };
+
+  VARIABLE_PRODUCT.scope.closePopupTax = function () {
+    VARIABLE_PRODUCT.scope.productNow = null;
+    VARIABLE_PRODUCT.scope.showPopupTax = false;
   };
 }
 
 function calculatePriceAfterTax(productNow) {
   productNow.taxes = [];
   productNow.priceAfterTax = productNow.price;
-  if (GLOBAL_VARIABLE.scope.taxes) {
-    for (const tax of GLOBAL_VARIABLE.scope.taxes) {
+  if (VARIABLE_PRODUCT.scope.taxes) {
+    for (const tax of VARIABLE_PRODUCT.scope.taxes) {
       if (tax.isDefault || productNow.privateTaxIds.includes(tax.id)) {
         productNow.taxes.push(tax);
         productNow.priceAfterTax += productNow.price * tax.rate;
@@ -176,17 +172,17 @@ function calculatePriceAfterTax(productNow) {
   }
 }
 
-function handlePopupCreate() {
-  GLOBAL_VARIABLE.scope.showPopupCreate = false;
+function handlePopupCreateProduct() {
+  VARIABLE_PRODUCT.scope.showPopupCreate = false;
 
-  GLOBAL_VARIABLE.scope.createProduct = createProduct;
+  VARIABLE_PRODUCT.scope.createProduct = createProduct;
 
-  GLOBAL_VARIABLE.scope.openPopupCreate = function () {
-    GLOBAL_VARIABLE.scope.showPopupCreate = true;
+  VARIABLE_PRODUCT.scope.openPopupCreate = function () {
+    VARIABLE_PRODUCT.scope.showPopupCreate = true;
   };
 
-  GLOBAL_VARIABLE.scope.closePopupCreate = function () {
-    GLOBAL_VARIABLE.scope.showPopupCreate = false;
+  VARIABLE_PRODUCT.scope.closePopupCreate = function () {
+    VARIABLE_PRODUCT.scope.showPopupCreate = false;
   };
 }
 
@@ -230,29 +226,29 @@ function createProduct() {
     }
   }
 
-  GLOBAL_VARIABLE.http.post("api/product/create", product).then((res) => {
+  VARIABLE_PRODUCT.http.post("api/product/create", product).then((res) => {
     fetchProducts();
   });
 }
 
-function handlePopupUpdate() {
-  GLOBAL_VARIABLE.scope.showPopupUpdate = false;
+function handlePopupUpdateProduct() {
+  VARIABLE_PRODUCT.scope.showPopupUpdate = false;
 
-  GLOBAL_VARIABLE.scope.updateProduct = updateProduct;
+  VARIABLE_PRODUCT.scope.updateProduct = updateProduct;
 
-  GLOBAL_VARIABLE.scope.openPopupUpdate = function (productNow) {
-    GLOBAL_VARIABLE.scope.productNow = productNow;
-    GLOBAL_VARIABLE.scope.showPopupUpdate = true;
+  VARIABLE_PRODUCT.scope.openPopupUpdate = function (productNow) {
+    VARIABLE_PRODUCT.scope.productNow = productNow;
+    VARIABLE_PRODUCT.scope.showPopupUpdate = true;
   };
 
-  GLOBAL_VARIABLE.scope.closePopupUpdate = function () {
-    GLOBAL_VARIABLE.scope.productNow = null;
-    GLOBAL_VARIABLE.scope.showPopupUpdate = false;
+  VARIABLE_PRODUCT.scope.closePopupUpdate = function () {
+    VARIABLE_PRODUCT.scope.productNow = null;
+    VARIABLE_PRODUCT.scope.showPopupUpdate = false;
   };
 }
 
 function updateProduct() {
-    const product = GLOBAL_VARIABLE.scope.productNow;
+    const product = VARIABLE_PRODUCT.scope.productNow;
     product.Name = document.getElementById("name").value;
     product.Quantity = document.getElementById("quantity").value;
     product.Price = document.getElementById("price").value;
@@ -291,29 +287,29 @@ function updateProduct() {
       }
     }
 
-    GLOBAL_VARIABLE.http.post(`api/product/update/${product.id}`, product).then((res) => {
+    VARIABLE_PRODUCT.http.post(`api/product/update/${product.id}`, product).then((res) => {
       fetchProducts();
     });
 }
 
-function handlePopupDelete() {
-  GLOBAL_VARIABLE.scope.showPopupDelete = false;
+function handlePopupDeleteProduct() {
+  VARIABLE_PRODUCT.scope.showPopupDelete = false;
 
-  GLOBAL_VARIABLE.scope.deleteProduct = deleteProduct;
+  VARIABLE_PRODUCT.scope.deleteProduct = deleteProduct;
 
-  GLOBAL_VARIABLE.scope.openPopupDelete = function (productNow) {
-    GLOBAL_VARIABLE.scope.productNow = productNow;
-    GLOBAL_VARIABLE.scope.showPopupDelete = true;
+  VARIABLE_PRODUCT.scope.openPopupDelete = function (productNow) {
+    VARIABLE_PRODUCT.scope.productNow = productNow;
+    VARIABLE_PRODUCT.scope.showPopupDelete = true;
   };
 
-  GLOBAL_VARIABLE.scope.closePopupDelete = function () {
-    GLOBAL_VARIABLE.scope.productNow = null;
-    GLOBAL_VARIABLE.scope.showPopupDelete = false;
+  VARIABLE_PRODUCT.scope.closePopupDelete = function () {
+    VARIABLE_PRODUCT.scope.productNow = null;
+    VARIABLE_PRODUCT.scope.showPopupDelete = false;
   };
 }
 
 function deleteProduct() {
-    GLOBAL_VARIABLE.http.post(`api/product/delete/${GLOBAL_VARIABLE.scope.productNow.id}`).then((res) => {
+    VARIABLE_PRODUCT.http.post(`api/product/delete/${VARIABLE_PRODUCT.scope.productNow.id}`).then((res) => {
       fetchProducts();
     });
 }

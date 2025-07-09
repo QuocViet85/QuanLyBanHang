@@ -18,7 +18,6 @@ public class ProductModel
     public string Name { set; get; }
     public string? Description { set; get; }
     public int Quantity { set; get; }
-    public bool IsActive { set; get; } = true;
     public string UserId { set; get; }
 
     [Precision(18, 2)]

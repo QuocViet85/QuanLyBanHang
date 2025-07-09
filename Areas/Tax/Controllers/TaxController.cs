@@ -19,13 +19,27 @@ public class TaxController : Controller
         _userManager = userManager;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pageNumber, int limit)
     {
         try
         {
             var user = await _userManager.GetUserAsync(User);
 
-            var taxes = await _dbContext.Taxes.Where(t => t.UserId == user.Id).ToListAsync();
+            List<TaxModel> taxes;
+
+            if (pageNumber > 0 && limit > 0)
+            {
+                taxes = await _dbContext.Taxes.Where(t => t.UserId == user.Id)
+                                                .Skip((pageNumber - 1) * limit)
+                                                .Take(limit)
+                                                .ToListAsync();
+            }
+            else
+            {
+                taxes = await _dbContext.Taxes.Where(t => t.UserId == user.Id).ToListAsync();
+            }
+
+            int totalTaxes = await _dbContext.Taxes.CountAsync();
 
             List<TaxViewModel> taxVMs = new List<TaxViewModel>();
 
@@ -33,11 +47,14 @@ public class TaxController : Controller
             {
                 taxVMs = taxes.Select(p => GetTaxVMFromtaxModel(p)).ToList();
             }
-            return Ok(taxVMs);
+            return Ok(new
+            {
+                taxes = taxVMs,
+                totalTaxes = totalTaxes
+            });
         }
         catch
-        { }
-        return null;
+        { return BadRequest("Lỗi lấy thuế"); }
     }
 
     [HttpGet("active")]
@@ -58,38 +75,11 @@ public class TaxController : Controller
             return Ok(taxVMs);
         }
         catch
-        { }
-        return null;
-    }
-
-    [HttpGet("detail/{id}")]
-    public async Task<IActionResult> Detail(int id)
-    {
-        try
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var tax = await _dbContext.Taxes.Where(p => p.Id == id && p.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (tax != null)
-            {
-                var taxVM = GetTaxVMFromtaxModel(tax);
-                return View(taxVM);
-            }
-        }
-        catch { }
-
-        return null;
-    }
-
-    [HttpGet("create")]
-    public async Task<IActionResult> Create()
-    {
-        return View();
+        { return BadRequest("Lấy thuế thất bại"); }
     }
 
     [HttpPost("create")]
-    public async Task<IActionResult> Create(TaxViewModel taxVM)
+    public async Task<IActionResult> Create([FromBody] TaxViewModel taxVM)
     {
         try
         {
@@ -110,65 +100,62 @@ public class TaxController : Controller
 
                 await _dbContext.Taxes.AddAsync(taxModel);
                 await _dbContext.SaveChangesAsync();
+                
+                return Ok("Tạo thuế thành công");
             }
-        }
-        catch { }
-        return RedirectToAction("Create");
-    }
-
-    [HttpGet("update/{id}")]
-    public async Task<IActionResult> Update(int id)
-    {
-        try
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var taxUpdate = await _dbContext.Taxes.Where(p => p.Id == id && p.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (taxUpdate != null)
+            else
             {
-                var taxVMUpdate = GetTaxVMFromtaxModel(taxUpdate);
-
-                return View(taxVMUpdate);
+                return BadRequest("Thông tin nhập vào không hợp lệ");
             }
         }
-        catch { }
-        return null;
+        catch { return BadRequest("Tạo thuế thất bại"); }
+        
     }
 
     [HttpPost("update/{id}")]
-    public async Task<IActionResult> Update(int id, TaxViewModel taxVM)
+    public async Task<IActionResult> Update(int id, [FromBody] TaxViewModel taxVM)
     {
         try
         {
             var user = await _userManager.GetUserAsync(User);
             var taxUpdate = await _dbContext.Taxes.Where(p => p.Id == id && p.UserId == user.Id).FirstOrDefaultAsync();
 
-            if (taxUpdate != null)
+            if (ModelState.IsValid)
             {
-                taxUpdate.Name = taxVM.Name;
-                taxUpdate.Description = taxVM.Description;
-                taxUpdate.IsDefault = taxVM.IsDefault;
-                taxUpdate.IsActive = taxVM.IsActive;
-                taxUpdate.Code = taxVM.Code;
-                taxUpdate.Rate = taxVM.Rate;
-
-                _dbContext.Taxes.Update(taxUpdate);
-
-                int result = await _dbContext.SaveChangesAsync();
-
-                if (taxUpdate.IsDefault)
+                if (taxUpdate != null)
                 {
-                    await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM TaxProducts WHERE TaxId = {0}", taxUpdate.Id);
+                    taxUpdate.Name = taxVM.Name;
+                    taxUpdate.Description = taxVM.Description;
+                    taxUpdate.IsDefault = taxVM.IsDefault;
+                    taxUpdate.IsActive = taxVM.IsActive;
+                    taxUpdate.Code = taxVM.Code;
+                    taxUpdate.Rate = taxVM.Rate;
+
+                    _dbContext.Taxes.Update(taxUpdate);
+
+                    int result = await _dbContext.SaveChangesAsync();
+
+                    if (taxUpdate.IsDefault)
+                    {
+                        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM TaxProducts WHERE TaxId = {0}", taxUpdate.Id);
+                    }
+                    return Ok("Cập nhật thuế thành công");
+                }
+                else
+                {
+                    throw new Exception();
                 }
             }
+            else
+            {
+                return BadRequest("Thông tin nhập vào không hợp lệ");
+            }    
         }
-        catch { }
-        return RedirectToAction("Update", new { id = id });
+        catch { return BadRequest("Cập nhật thuế thất bại"); }
 
     }
 
-    [HttpGet("delete/{id}")]
+    [HttpPost("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         try
@@ -179,10 +166,14 @@ public class TaxController : Controller
             {
                 _dbContext.Taxes.Remove(taxDelete);
                 await _dbContext.SaveChangesAsync();
+                return Ok("Xóa thuế thành công");
+            }
+            else
+            {
+                throw new Exception();
             }
         }
-        catch { }
-        return RedirectToAction("Index");
+        catch { return BadRequest("Xóa thuế thất bại"); }
     }
 
     private TaxViewModel GetTaxVMFromtaxModel(TaxModel tax)

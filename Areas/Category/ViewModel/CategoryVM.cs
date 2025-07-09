@@ -11,4 +11,7 @@ public class CategoryVM
 
     [Display(Name = "Mô tả")]
     public string Description { set; get; }
+
+    public DateTime? CreatedAt { set; get; }
+    public DateTime? UpdatedAt { set; get; }
 }
