@@ -1,0 +1,8 @@
+<div class="overlay" ng-if="showPopupCompleted">
+  <div class="popup">
+    <h3>Xác nhận hoàn thành hóa đơn</h3>
+    <p>{{ orderNow.name }}</p>
+    <button class="btn btn-success btn-sm" ng-click="completedOrder()">Hoàn thành</button>
+    <button class="btn btn-danger btn-sm" ng-click="closePopupCompleted()">Đóng</button>
+  </div>
+</div>

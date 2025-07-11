@@ -1,0 +1,71 @@
+<div class="overlay" ng-if="showPopupDetail">
+  <div class="popup">
+    <h3>Chi tiết hóa đơn</h3>
+    <table border="0" style="display: flex;">
+      <tr>
+        <td>
+          <span style="font-weight: bold;">Khách hàng: &nbsp;</span>
+        </td>
+        <td>
+          {{ orderNow.customerName }}
+        </td>
+      </tr>
+    </table>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">STT</th>
+                <th scope="col">Tên hàng hóa</th>
+                <th scope="col">Số lượng</th>
+                <th scope="col">Đơn giá</th>
+                <th scope="col">Giảm giá</th>
+                <th scope="col">Thuế riêng</th>
+                <th scope="col">Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="(key, item) in orderNow.orderDetails">
+                <th scope="row">{{ key + 1 }}</th>
+                <td>{{ item.productName }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.price }} VNĐ</td>
+                <td>{{ item.discount }}</td>
+                <td><span style="font-size: x-small;">{{ item.privateTaxes }}</span></td>
+                <td>{{ item.priceAfterTax }} VNĐ</td>
+            </tr>
+            <tr>
+                <td>
+                    Tổng tiền trước thuế chung: 
+                </td>
+                <td>
+                    {{ orderNow.totalBeforeDefaultTax }} VNĐ
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Thuế chung: 
+                </td>
+                <td>
+                    {{ orderNow.defaultTaxes }}
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Tổng tiền thanh toán: 
+                </td>
+                <td>
+                    {{ orderNow.totalAfterTax }} VNĐ
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="float: left; font-weight: bold;">Người mua hàng</div>
+    <div style="float: right; font-weight: bold;">Người bán hàng</div>
+    <br>
+    <button class="btn btn-info btn-sm">In</button>
+    <button class="btn btn-primary btn-sm">Xuất PDF</button>
+    <button class="btn btn-danger btn-sm" ng-click="closePopupDetail()">Đóng</button>
+  </div>
+</div>

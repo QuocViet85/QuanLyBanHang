@@ -78,6 +78,48 @@ public class TaxController : Controller
         { return BadRequest("Lấy thuế thất bại"); }
     }
 
+    [HttpGet("active-default")]
+    public async Task<IActionResult> GetTaxActiveDefaut()
+    {
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            var taxes = await _dbContext.Taxes.Where(t => t.UserId == user.Id && t.IsActive && t.IsDefault).ToListAsync();
+
+            List<TaxViewModel> taxVMs = new List<TaxViewModel>();
+
+            if (taxes.Count > 0)
+            {
+                taxVMs = taxes.Select(p => GetTaxVMFromtaxModel(p)).ToList();
+            }
+            return Ok(taxVMs);
+        }
+        catch
+        { return BadRequest("Lấy thuế thất bại"); }
+    }
+
+    [HttpGet("active-private")]
+    public async Task<IActionResult> GetTaxActivePrivate()
+    {
+        try
+        {
+            var user = await _userManager.GetUserAsync(User);
+
+            var taxes = await _dbContext.Taxes.Where(t => t.UserId == user.Id && t.IsActive && !t.IsDefault).ToListAsync();
+
+            List<TaxViewModel> taxVMs = new List<TaxViewModel>();
+
+            if (taxes.Count > 0)
+            {
+                taxVMs = taxes.Select(p => GetTaxVMFromtaxModel(p)).ToList();
+            }
+            return Ok(taxVMs);
+        }
+        catch
+        { return BadRequest("Lấy thuế thất bại"); }
+    }
+
     [HttpPost("create")]
     public async Task<IActionResult> Create([FromBody] TaxViewModel taxVM)
     {

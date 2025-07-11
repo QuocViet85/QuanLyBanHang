@@ -43,15 +43,19 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
                 .HasConstraintName("FK_Attribute_Value");
         });
 
-        builder.Entity<OrderProductModel>(entity =>
+        builder.Entity<OrderDetailModel>(entity =>
         {
-            entity.HasKey(op => new { op.ProductId, op.OrderId });
-
             entity.HasOne(op => op.Product) //chỉ ra đối tượng có mqh 1 nhiều với bảng này trên bảng này
-                .WithMany(p => p.OrderProducts) //chỉ ra đối tượng là bảng này trên bảng có mối quan hệ 1 nhiều với bảng này
+                .WithMany(p => p.OrderDetails) //chỉ ra đối tượng là bảng này trên bảng có mối quan hệ 1 nhiều với bảng này
                 .HasForeignKey(op => op.ProductId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("FK_OrderDetail_Product");
+
+            entity.HasOne(op => op.Order) //chỉ ra đối tượng có mqh 1 nhiều với bảng này trên bảng này
+                .WithMany(o => o.OrderDetails) //chỉ ra đối tượng là bảng này trên bảng có mối quan hệ 1 nhiều với bảng này
+                .HasForeignKey(op => op.OrderId)
                 .OnDelete(DeleteBehavior.NoAction)
-                .HasConstraintName("FK_Order_Product");
+                .HasConstraintName("FK_OrderDetail_Order");
         });
 
         builder.Entity<TaxProductModel>(entity =>
@@ -73,7 +77,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     public DbSet<AttributeModel> Attributes { set; get; }
     public DbSet<AttributeValueModel> AttributeValues { set; get; }
     public DbSet<OrderModel> Orders { set; get; }
-    public DbSet<OrderProductModel> OrderProducts { set; get; }
+    public DbSet<OrderDetailModel> OrderDetails { set; get; }
     public DbSet<CustomerModel> Customers { set; get; }
     public DbSet<TaxModel> Taxes { set; get; }
     public DbSet<TaxProductModel> TaxProducts { set; get; }

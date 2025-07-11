@@ -14,9 +14,9 @@
   <tbody>
     <tr ng-repeat="(key, item) in dynamicAttributes">
       <th scope="row">{{ key + 1 }}</th>
-      <td>{{ item.name }}</td>
-      <td><a ng-click="openPopupUpdate(item)" class="btn btn-warning" href="">Sửa</a></td>
-      <td><a ng-click="openPopupDelete(item)" class="btn btn-danger" href="">Xóa</a></td>
+      <td>{{ item.name }}</td> 
+      <td><a ng-click="openPopupUpdate(item)" class="btn btn-warning btn-sm" href="">Sửa</a></td>
+      <td><a ng-click="openPopupDelete(item)" class="btn btn-danger btn-sm" href="">Xóa</a></td>
     </tr>
   </tbody>
 </table>

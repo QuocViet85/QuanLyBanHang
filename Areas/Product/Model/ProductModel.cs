@@ -34,7 +34,7 @@ public class ProductModel
     public List<CategoryProductModel>? CategoryProducts { set; get; }
     public List<AttributeValueModel>? AttributeProducts { set; get; }
     public List<ProductPhotoModel>? ProductPhotos { set; get; }
-    public List<OrderProductModel>? OrderProducts { set; get; }
+    public List<OrderDetailModel>? OrderDetails { set; get; }
     public List<TaxProductModel>? TaxProducts { set; get; }
 
 }

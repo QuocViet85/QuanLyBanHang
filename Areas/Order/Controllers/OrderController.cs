@@ -8,11 +8,12 @@ using WebBanHang.Areas.Customer.Model;
 using WebBanHang.Areas.Tax.Model;
 using WebBanHang.Areas.Product.Model;
 using Microsoft.AspNetCore.Authorization;
+using System.Runtime.CompilerServices;
 
 namespace WebBanHang.Areas.Order.Controllers;
 
 [Area("Order")]
-[Route("order")]
+[Route("api/order")]
 [Authorize]
 public class OrderController : Controller
 {
@@ -24,25 +25,49 @@ public class OrderController : Controller
         _userManager = userManager;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pageNumber, int limit)
     {
         try
         {
             var user = await _userManager.GetUserAsync(User);
 
-            var orders = await _dbContext.Orders.Include(o => o.Customer).Where(o => o.UserId == user.Id).ToListAsync();
+            List<OrderModel> orders;
+
+            if (pageNumber > 0 && limit > 0)
+            {
+                orders = await _dbContext.Orders
+                                .Where(o => o.UserId == user.Id)
+                                .Include(o => o.Customer)
+                                .Include(o => o.OrderDetails)
+                                .Skip((pageNumber - 1) * limit)
+                                .Take(limit)
+                                .ToListAsync();
+            }
+            else
+            {
+                orders = await _dbContext.Orders
+                                .Where(o => o.UserId == user.Id)
+                                .Include(o => o.Customer)
+                                .Include(o => o.OrderDetails)
+                                .ToListAsync();
+            }
+
+            int totalOrders = await _dbContext.Orders.CountAsync();
 
             List<OrderVM> orderVMs = new List<OrderVM>();
 
-            if (orders.Count > 0)
+            if (orders?.Count > 0)
             {
                 orderVMs = orders.Select(p => GetOrderVMFromOrderModel(p)).ToList();
             }
 
-            return View(orderVMs);
+            return Ok(new
+            {
+                orders = orderVMs,
+                totalOrders = totalOrders
+            });
         }
-        catch { }
-        return null;
+        catch { return BadRequest("Lấy hóa đơn thất bại"); }
     }
 
     [HttpGet("detail/{id}")]
@@ -52,18 +77,22 @@ public class OrderController : Controller
         {
             var user = await _userManager.GetUserAsync(User);
 
-            var order = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
+            var order = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id)
+                                                .Include(o => o.Customer)
+                                                .Include(o => o.OrderDetails)
+                                                .FirstOrDefaultAsync();
 
             if (order != null)
             {
                 var orderVM = GetOrderVMFromOrderModel(order);
-                return View(order);
+                return Ok(order);
             }
-            return null;
+            else
+            {
+                throw new Exception();
+            }
         }
-        catch { }
-
-        return null;
+        catch { return BadRequest("Lấy hóa đơn thất bại"); }
     }
 
     [HttpGet("create")]
@@ -125,84 +154,159 @@ public class OrderController : Controller
                         return po.ProductId > 0 && po.Quantity > 0;
                     }).ToList();
 
-                    await CalculateTotalPrice(orderModel, orderVM);
-                }
-            }
-        }
-        catch
-        {}
+                    int result = await CalculateTotalPriceAndSaveOrder(orderModel, orderVM);
 
-        return RedirectToAction("Create");
-    }
-
-    [HttpGet("update/{id}")]
-    public async Task<IActionResult> Update(int id)
-    {
-        try
-        {
-            var user = await _userManager.GetUserAsync(User);
-
-            var orderUpdate = await _dbContext.Orders.Include(o => o.Customer).Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (orderUpdate != null)
-            {
-                var orderVMUpdate = GetOrderVMFromOrderModel(orderUpdate);
-
-                if (orderUpdate.Customer != null) orderVMUpdate.CustomerId = orderUpdate.Customer.Id;
-
-                ViewData["customers"] = await GetCustomers();
-
-                return View(orderVMUpdate);
-            }
-        }
-        catch { }
-
-        return null;
-    }
-
-    [HttpPost("update/{id}")]
-    public async Task<IActionResult> Update(int id, OrderVM orderVM)
-    {
-        try
-        {
-            var user = await _userManager.GetUserAsync(User);
-            var orderUpdate = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
-
-            if (orderUpdate != null)
-            {
-                orderUpdate.CustomerName = orderVM.CustomerName;
-                orderUpdate.Completed = orderVM.Completed;
-                orderUpdate.UpdatedAt = DateTime.Now;
-
-                if (orderVM.CustomerId != 0)
-                {
-                    var customer = await GetCustomerById(orderVM.CustomerId);
-                    if (customer != null)
+                    if (result > 0)
                     {
-                        orderUpdate.CustomerId = customer.Id;
+                        return Ok("Tạo hóa đơn thành công");
                     }
                     else
                     {
-                        orderUpdate.CustomerName = orderVM.CustomerName;
+                        throw new Exception();
                     }
                 }
                 else
                 {
-                    orderUpdate.CustomerName = orderVM.CustomerName;
+                    throw new Exception();
                 }
-
-                _dbContext.Orders.Update(orderUpdate);
-                int result = await _dbContext.SaveChangesAsync();
-
-                return RedirectToAction("Update", new { id = id });
+            }
+            else
+            {
+                return BadRequest("Thông tin nhập vào không hợp lệ");
             }
         }
         catch
-        { }
-        return RedirectToAction("Update", new { id = id });
+        { return BadRequest("Tạo hóa đơn thất bại"); }
     }
 
-    [HttpGet("delete/{id}")]
+    [HttpPost("completed-order/{id}")]
+    public async Task<IActionResult> CompletedOrder(int id, [FromBody] bool completed)
+    {
+        try
+        {
+            if (completed)
+            {
+                var user = await _userManager.GetUserAsync(User);
+                var order = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id)
+                                                    .Include(o => o.OrderDetails)
+                                                    .FirstOrDefaultAsync();
+
+                if (!order.Completed)
+                {
+                    order.Completed = true;
+                    
+                    foreach (var orderDetail in order.OrderDetails)
+                    {
+                        var product = await _dbContext.Products.Where(p => p.Id == orderDetail.ProductId && p.UserId == user.Id).FirstOrDefaultAsync();
+
+                        if (product.Quantity < orderDetail.Quantity)
+                        {
+                            return BadRequest($"Sản phẩm {product.Name} đã hết hàng nên không thể hoàn thành hóa đơn");
+                        }
+
+                        product.Quantity = product.Quantity - orderDetail.Quantity;
+                    }
+
+                    await _dbContext.SaveChangesAsync();
+                    return Ok("Hoàn thành hóa đơn thành công");
+                }
+                else
+                {
+                    throw new Exception();
+                }
+                
+            }
+            else
+            {
+                throw new Exception();
+            }
+        }
+        catch
+        {
+            return BadRequest("Hoàn thành đơn thất bại");
+        }
+    }
+
+    // [HttpGet("update/{id}")]
+    // public async Task<IActionResult> Update(int id)
+    // {
+    //     try
+    //     {
+    //         var user = await _userManager.GetUserAsync(User);
+
+    //         var orderUpdate = await _dbContext.Orders.Include(o => o.Customer).Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
+
+    //         if (orderUpdate != null)
+    //         {
+    //             var orderVMUpdate = GetOrderVMFromOrderModel(orderUpdate);
+
+    //             if (orderUpdate.Customer != null) orderVMUpdate.CustomerId = orderUpdate.Customer.Id;
+
+    //             ViewData["customers"] = await GetCustomers();
+
+    //             return View(orderVMUpdate);
+    //         }
+    //     }
+    //     catch { }
+
+    //     return null;
+    // }
+
+    // [HttpPost("update/{id}")]
+    // public async Task<IActionResult> Update(int id, OrderVM orderVM)
+    // {
+    //     try
+    //     {
+    //         if (ModelState.IsValid)
+    //         {
+    //             var user = await _userManager.GetUserAsync(User);
+    //             var orderUpdate = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
+
+    //             if (orderUpdate != null)
+    //             {
+    //                 orderUpdate.CustomerName = orderVM.CustomerName;
+    //                 orderUpdate.Completed = orderVM.Completed;
+    //                 orderUpdate.UpdatedAt = DateTime.Now;
+
+    //                 if (orderVM.CustomerId != 0)
+    //                 {
+    //                     var customer = await GetCustomerById(orderVM.CustomerId);
+    //                     if (customer != null)
+    //                     {
+    //                         orderUpdate.CustomerId = customer.Id;
+    //                     }
+    //                     else
+    //                     {
+    //                         orderUpdate.CustomerName = orderVM.CustomerName;
+    //                     }
+    //                 }
+    //                 else
+    //                 {
+    //                     orderUpdate.CustomerName = orderVM.CustomerName;
+    //                 }
+
+    //                 _dbContext.Orders.Update(orderUpdate);
+    //                 int result = await _dbContext.SaveChangesAsync();
+
+    //                 return Ok("Cập nhật hóa đơn thành công");
+    //             }
+    //             else
+    //             {
+    //                 throw new Exception();
+    //             }
+    //         }
+    //         else
+    //         {
+    //             return BadRequest("Thông tin nhập vào không hợp lệ");
+    //         }
+
+    //     }
+    //     catch
+    //     { return BadRequest("Cập nhật hóa đơn thất bại"); }
+    // }
+
+    //Xóa hóa đơn
+    [HttpPost("delete/{id}")]
     public async Task<IActionResult> Delete(int id)
     {
         try
@@ -213,44 +317,92 @@ public class OrderController : Controller
             {
                 _dbContext.Orders.Remove(orderDelete);
                 int result = await _dbContext.SaveChangesAsync();
+                if (result > 0)
+                {
+                    await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM OrderDetails WHERE OrderId = {0}", orderDelete.Id);
+
+                    return Ok("Xóa hóa đơn thành công");
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            else
+            {
+                throw new Exception();
             }
         }
-        catch { }
-        return RedirectToAction("Index");
+        catch { return BadRequest("Xóa hóa đơn thất bại"); }
     }
 
-    [HttpGet("destroy/{id}")]
+    //Hủy hóa đơn (xóa hóa đơn và hiệu lực của hóa đơn), hồi phục lại số sản phẩm
+    [HttpPost("destroy/{id}")]
     public async Task<IActionResult> Destroy(int id)
     {
         try
         {
             var user = await _userManager.GetUserAsync(User);
-            var orderDestroy = await _dbContext.Orders.Include(o => o.OrderProducts).ThenInclude(op => op.Product).Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
+            var orderDestroy = await _dbContext.Orders.Include(o => o.OrderDetails).ThenInclude(op => op.Product).Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
             if (orderDestroy != null)
             {
-                foreach (var orderProduct in orderDestroy.OrderProducts)
+                foreach (var orderDetail in orderDestroy.OrderDetails)
                 {
-                    orderProduct.Product.Quantity += orderProduct.Quantity;
+                    orderDetail.Product.Quantity += orderDetail.Quantity;
                 }
-                _dbContext.OrderProducts.RemoveRange(orderDestroy.OrderProducts);
+                _dbContext.OrderDetails.RemoveRange(orderDestroy.OrderDetails);
                 _dbContext.Orders.Remove(orderDestroy);
                 int result = await _dbContext.SaveChangesAsync();
+
+                if (result > 0)
+                {
+                    return Ok("Xóa hóa đơn thành công");
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            else
+            {
+                throw new Exception();
             }
         }
-        catch { }
-        return RedirectToAction("Index");
+        catch { return BadRequest("Hủy hóa đơn thất bại"); }
     }
 
     private OrderVM GetOrderVMFromOrderModel(OrderModel order)
     {
-        return new OrderVM()
+        OrderVM orderVM = new OrderVM()
         {
             Id = order.Id,
             Name = order.Name,
             CustomerName = order.CustomerName,
             CustomerId = order.CustomerId,
-            Completed = order.Completed
+            Completed = order.Completed,
+            OrderDetails = order.OrderDetails,
+            DefaultTaxes = order.DefaultTaxes,
+            TotalBeforeDefautTax = order.TotalBeforeDefaultTax,
+            TotalAfterTax = order.TotalAfterTax
         };
+
+        if (orderVM.OrderDetails != null)
+        {
+            foreach (var orderDetail in orderVM.OrderDetails)
+            {
+                orderDetail.Order = null;
+            }
+        }
+
+        if (order.Customer != null)
+        {
+            orderVM.CustomerName = order.Customer.Name;
+        }
+
+        orderVM.CreatedAt = order.CreatedAt.ToString("dd/MM/yyyy");
+        orderVM.UpdatedAt = order.UpdatedAt.ToString("dd/MM/yyyy");
+
+        return orderVM;
     }
 
     private async Task<List<CustomerModel>> GetCustomers()
@@ -275,75 +427,87 @@ public class OrderController : Controller
         return await _dbContext.Products.Where(p => p.UserId == user.Id).ToListAsync();
     }
 
-    private async Task CalculateTotalPrice(OrderModel order, OrderVM orderVM)
+    private async Task<int> CalculateTotalPriceAndSaveOrder(OrderModel order, OrderVM orderVM)
     {
         var user = await _userManager.GetUserAsync(User);
-        decimal totalBeforeTax = 0;
-        decimal TotalAfterTax = 0;
+        decimal totalBeforeDefaultTax = 0;
+        decimal totalAfterDefaultTax = 0;
 
-        if (orderVM.ProductInOrders != null)
+        var taxDefaults = await GetTaxDefaults();
+        foreach (var productInOrder in orderVM.ProductInOrders)
         {
-            var taxDefaults = await GetTaxDefaults();
-            foreach (var productInOrder in orderVM.ProductInOrders)
+            var product = await _dbContext.Products.Include(p => p.TaxProducts).ThenInclude(t => t.Tax).Where(p => p.Id == productInOrder.ProductId && p.UserId == user.Id).FirstOrDefaultAsync();
+
+            if (product != null && product.Quantity >= productInOrder.Quantity)
             {
-                var product = await _dbContext.Products.Include(p => p.TaxProducts).ThenInclude(t => t.Tax).Where(p => p.Id == productInOrder.ProductId && p.UserId == user.Id).FirstOrDefaultAsync();
+                decimal priceBeforePrivateTax = (int)productInOrder.Quantity * (product.Price - product.Discount);
 
-                if (product != null && product.Quantity >= productInOrder.Quantity)
+                //Giá từng sản phẩm sau thuế riêng
+                decimal priceAfterPrivateTax = priceBeforePrivateTax;
+                string privateTaxes = "";
+
+                if (product.TaxProducts != null)
                 {
-                    //Giá trước thuế
-                    decimal priceBeforeTax = (int)productInOrder.Quantity * (product.Price - product.Discount);
-                    totalBeforeTax += priceBeforeTax;
-
-                    //Giá sau thuế
-                    // Thuế mặc định
-                    decimal priceAfterTax = priceBeforeTax;
-                    string taxes = "";
-                    foreach (var taxDefault in taxDefaults)
+                    foreach (var taxProduct in product.TaxProducts)
                     {
-                        priceAfterTax += priceBeforeTax * taxDefault.Rate;
-                        taxes += $"{taxDefault.Name} - {taxDefault.Rate * 100} %, ";
-                    }
-
-                    // Thuế riêng của sản phẩm
-                    if (product.TaxProducts != null)
-                    {
-                        foreach (var taxProduct in product.TaxProducts)
+                        if (taxProduct.Tax != null && taxProduct.Tax.IsActive)
                         {
-                            if (taxProduct.Tax != null && taxProduct.Tax.IsActive)
-                            {
-                                priceAfterTax += priceBeforeTax * taxProduct.Tax.Rate;
-                                taxes += $"{taxProduct.Tax.Name} - {taxProduct.Tax.Rate * 100} %, ";
-                            }
+                            priceAfterPrivateTax *= (1 + taxProduct.Tax.Rate);
+                            privateTaxes += $"{taxProduct.Tax.Name} - {taxProduct.Tax.Rate * 100} %, ";
                         }
                     }
-
-                    var orderProduct = new OrderProductModel()
-                    {
-                        ProductId = product.Id,
-                        OrderId = order.Id,
-                        Taxes = taxes,
-                        Discount = product.Discount,
-                        Quantity = product.Quantity,
-                        PriceBeforeTax = priceBeforeTax,
-                        PriceAfterTax = priceAfterTax
-                    };
-                    await _dbContext.AddAsync(orderProduct);
-                    product.Quantity = product.Quantity - (int)productInOrder.Quantity;
-
-                    totalBeforeTax += priceBeforeTax;
-                    TotalAfterTax += priceAfterTax;
-
-                    order.TotalBeforeTax = totalBeforeTax;
-                    order.TotalAfterTax = TotalAfterTax;
-                    await _dbContext.SaveChangesAsync();
                 }
-                else
+
+                priceAfterPrivateTax = Math.Round(priceAfterPrivateTax);
+
+                var orderDetail = new OrderDetailModel()
                 {
-                    _dbContext.Orders.Remove(order);
-                    await _dbContext.SaveChangesAsync();
+                    ProductId = product.Id,
+                    ProductName = product.Name,
+                    OrderId = order.Id,
+                    Price = product.Price,
+                    PrivateTaxes = privateTaxes,
+                    Discount = product.Discount,
+                    Quantity = product.Quantity,
+                    PriceBeforePrivateTax = priceBeforePrivateTax,
+                    PriceAfterPrivateTax = priceAfterPrivateTax
+                };
+                await _dbContext.OrderDetails.AddAsync(orderDetail);
+
+                totalBeforeDefaultTax += priceAfterPrivateTax;
+
+                if (orderVM.Completed)
+                {
+                    product.Quantity = product.Quantity - (int)productInOrder.Quantity;
                 }
             }
+            else
+            {
+                _dbContext.Orders.Remove(order);
+                await _dbContext.SaveChangesAsync();
+
+                return 0;
+            }
         }
+
+        //Tính tổng tiền sau thuế chung
+        totalAfterDefaultTax = totalBeforeDefaultTax;
+
+        string defaultTaxes = "";
+        foreach (var tax in taxDefaults)
+        {
+            totalAfterDefaultTax *= (1 + tax.Rate);
+            defaultTaxes += $"{tax.Name} - {tax.Rate * 100} %, ";
+        }
+
+        order.TotalBeforeDefaultTax = totalBeforeDefaultTax;
+        totalAfterDefaultTax = Math.Round(totalAfterDefaultTax);
+        order.TotalAfterTax = totalAfterDefaultTax;
+        order.DefaultTaxes = defaultTaxes;
+        
+        await _dbContext.SaveChangesAsync();
+
+        return 1;
     }
 
     private async Task<List<TaxModel>> GetTaxDefaults()

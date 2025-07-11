@@ -1,38 +1,49 @@
-<h2>Danh sách danh mục sản phẩm</h2>
-<button type="button" class="btn btn-primary text-left" ng-click="openPopupCreate()">Tạo danh mục</button>
+<h2>Danh sách hóa đơn</h2>
 
 <table class="table">
   <thead>
     <tr>
       <th scope="col">Stt</th>
       <th scope="col">Tên</th>
+      <th scope="col">Khách hàng</th>
+      <th scope="col">Hoàn thành</th>
+      <th scope="col">Chi tiết</th>
       <th scope="col">Ngày thêm</th>
       <th scope="col">Ngày sửa</th>
-      <th scope="col"></th>
       <th scope="col"></th>
       <th scope="col"></th>
     </tr>
   </thead>
   <tbody>
-    <tr ng-repeat="(key, item) in categories">
+    <tr ng-repeat="(key, item) in orders">
       <th scope="row">{{ key + 1 }}</th>
       <td>{{ item.name }}</td>
+      <td>{{ item.customerName }}</td>
+      <td>
+        {{ item.completed ? "Hoàn thành" : "Chưa hoàn thành" }}
+        <div ng-if="!item.completed">
+          <button ng-click="openPopupCompleted(item)" class="btn btn-success btn-sm">Hoàn thành</button>
+        </div>
+      </td>
+      <td><a ng-click="openPopupDetail(item)" class="btn btn-info btn-sm">Chi tiết</a></td>
       <td>{{ item.createdAt }}</td>
       <td>{{ item.updatedAt }}</td>
-      <td><button ng-click="openPopupDescription(item)" class="btn btn-info btn-sm" href="">Xem mô tả</button></td>
-      <td><a ng-click="openPopupUpdate(item)" class="btn btn-warning btn-sm" href="">Sửa</a></td>
+      <td><a ng-click="openPopupDestroy(item)" class="btn btn-warning btn-sm" href="">Hủy</a></td>
       <td><a ng-click="openPopupDelete(item)" class="btn btn-danger btn-sm" href="">Xóa</a></td>
     </tr>
   </tbody>
 </table>
+
+
     <button ng-click="paginate.minusPageNumber()" class="btn btn-dark btn-sm">Lùi</button>
     <input id="pageNumber" style="width: 50px;" type="number" ng-model="paginate.pageNumber"></input> / {{ paginate.totalPages }}
     <button ng-click="paginate.plusPageNumber()" class="btn btn-dark btn-sm">Tiến</button>
 
-<div ng-include="templateDescription"></div>
 
-<div ng-include="templateCreate"></div>
+<div ng-include="templateDetail"></div>
 
-<div ng-include="templateUpdate"></div>
+<div ng-include="templateCompleted"></div>
+
+<div ng-include="templateDestroy"></div>
 
 <div ng-include="templateDelete"></div>

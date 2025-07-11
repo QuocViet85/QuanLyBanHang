@@ -26,6 +26,10 @@ app.config(['$routeProvider', function($routeProvider) {
       templateUrl: window.location.origin + '/app/templates/customer/customer.html',
       controller: 'customerController'
     })
+    .when('/order', {
+      templateUrl: window.location.origin + '/app/templates/order/order.html',
+      controller: 'orderController'
+    })
 }]);
 
 

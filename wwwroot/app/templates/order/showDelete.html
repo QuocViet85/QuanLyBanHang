@@ -1,0 +1,8 @@
+<div class="overlay" ng-if="showPopupDelete">
+  <div class="popup">
+    <h3>Xác nhận xóa hóa đơn</h3>
+    <p>{{ orderNow.name }}</p>
+    <button class="btn btn-danger btn-sm" ng-click="deleteOrder()">Xóa</button>
+    <button class="btn btn-danger btn-sm" ng-click="closePopupDelete()">Đóng</button>
+  </div>
+</div>

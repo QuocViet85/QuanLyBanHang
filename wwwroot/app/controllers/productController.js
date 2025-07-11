@@ -9,6 +9,8 @@ app.controller("productController", [
     $scope.productNow = null;
     $scope.categories = [];
     $scope.taxes = [];
+    $scope.defaultTaxes = [];
+    $scope.privateTaxes = [];
     $scope.dynamicAttributes = [];
 
     handlePaginateProduct();
@@ -67,6 +69,15 @@ function fetAllDynamicAttributes() {
 function fetchAllTaxes() {
   VARIABLE_PRODUCT.http.get("api/tax/active").then(function (res) {
     VARIABLE_PRODUCT.scope.taxes = res.data;
+    if (VARIABLE_PRODUCT.scope.taxes) {
+      for (const tax of VARIABLE_PRODUCT.scope.taxes) {
+        if (tax.isDefault) {
+          VARIABLE_PRODUCT.scope.defaultTaxes.push(tax);
+        }else {
+          VARIABLE_PRODUCT.scope.privateTaxes.push(tax);
+        }
+      }
+    }
   });
 }
 
@@ -161,15 +172,33 @@ function handlePopup_Tax() {
 
 function calculatePriceAfterTax(productNow) {
   productNow.taxes = [];
-  productNow.priceAfterTax = productNow.price;
-  if (VARIABLE_PRODUCT.scope.taxes) {
-    for (const tax of VARIABLE_PRODUCT.scope.taxes) {
-      if (tax.isDefault || productNow.privateTaxIds.includes(tax.id)) {
+  var realPrice = productNow.price;
+  if (productNow.discount) {
+    realPrice -= productNow.discount;
+  }
+
+  productNow.priceAfterPrivateTaxes = realPrice;
+  
+  if (VARIABLE_PRODUCT.scope.privateTaxes) {
+    for (const tax of VARIABLE_PRODUCT.scope.privateTaxes) {
+      if (productNow.privateTaxIds.includes(tax.id)) {
         productNow.taxes.push(tax);
-        productNow.priceAfterTax += productNow.price * tax.rate;
+        productNow.priceAfterPrivateTaxes *= (1 + tax.rate);
       }
     }
   }
+
+  productNow.priceAfterPrivateTaxes = Math.round(productNow.priceAfterPrivateTaxes);
+  productNow.priceAfterTaxes = productNow.priceAfterPrivateTaxes;
+
+  if (VARIABLE_PRODUCT.scope.defaultTaxes) {
+    for (const tax of VARIABLE_PRODUCT.scope.defaultTaxes) {
+      productNow.taxes.push(tax);
+      productNow.priceAfterTaxes *= (1 + tax.rate);
+    }
+  }
+
+  productNow.priceAfterTaxes = Math.round(productNow.priceAfterTaxes);
 }
 
 function handlePopupCreateProduct() {

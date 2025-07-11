@@ -23,14 +23,16 @@ public class OrderModel
     [ForeignKey("CustomerId")]
     public CustomerModel? Customer { set; get; }
     public bool Completed { set; get; } = true;
+
+    public string? DefaultTaxes { set; get; }
     public DateTime CreatedAt { set; get; }
     public DateTime UpdatedAt { set; get; }
 
     [Precision(18, 2)] //phải chỉ rõ độ chính xác của kiểu decimal trong database
-    public decimal TotalBeforeTax { set; get; }
+    public decimal TotalBeforeDefaultTax { set; get; }
 
     [Precision(18, 2)]
     public decimal TotalAfterTax { set; get; }
-    public List<OrderProductModel> OrderProducts { set; get; }
+    public List<OrderDetailModel> OrderDetails { set; get; }
 
 }
