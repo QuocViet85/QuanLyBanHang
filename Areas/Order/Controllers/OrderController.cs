@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using WebBanHang.Areas.Order.ViewModel;
 using WebBanHang.Data;
 using WebBanHang.Areas.Order.Model;
-using WebBanHang.Areas.Customer.Model;
 using WebBanHang.Areas.Tax.Model;
 using WebBanHang.Areas.Product.Model;
 using Microsoft.AspNetCore.Authorization;
@@ -37,7 +36,6 @@ public class OrderController : Controller
             {
                 orders = await _dbContext.Orders
                                 .Where(o => o.UserId == user.Id)
-                                .Include(o => o.Customer)
                                 .Include(o => o.OrderDetails)
                                 .Skip((pageNumber - 1) * limit)
                                 .Take(limit)
@@ -47,7 +45,6 @@ public class OrderController : Controller
             {
                 orders = await _dbContext.Orders
                                 .Where(o => o.UserId == user.Id)
-                                .Include(o => o.Customer)
                                 .Include(o => o.OrderDetails)
                                 .ToListAsync();
             }
@@ -78,7 +75,6 @@ public class OrderController : Controller
             var user = await _userManager.GetUserAsync(User);
 
             var order = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id)
-                                                .Include(o => o.Customer)
                                                 .Include(o => o.OrderDetails)
                                                 .FirstOrDefaultAsync();
 
@@ -95,22 +91,8 @@ public class OrderController : Controller
         catch { return BadRequest("Lấy hóa đơn thất bại"); }
     }
 
-    [HttpGet("create")]
-    public async Task<IActionResult> Create()
-    {
-        try
-        {
-            ViewData["customers"] = await GetCustomers();
-            ViewData["products"] = await GetProducts();
-            return View();
-        }
-        catch { }
-
-        return null;
-    }
-
     [HttpPost("create")]
-    public async Task<IActionResult> Create(OrderVM orderVM)
+    public async Task<IActionResult> Create([FromBody] OrderVM orderVM)
     {
         try
         {
@@ -122,26 +104,18 @@ public class OrderController : Controller
                 {
                     Name = string.IsNullOrEmpty(orderVM.Name) ? $"DH - {DateTime.Now}" : orderVM.Name,
                     Completed = orderVM.Completed,
+                    CustomerName = orderVM.CustomerName,
+                    CustomerPhoneNumber = orderVM.CustomerPhoneNumber,
                     UserId = user.Id,
                     CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
                 };
 
-                if (orderVM.CustomerId != 0)
+                List<TaxModel> taxDefaults = await GetTaxDefaults();
+
+                orderModel.DefaultTaxes = "";
+                foreach (var tax in taxDefaults)
                 {
-                    var customer = await GetCustomerById(orderVM.CustomerId);
-                    if (customer != null)
-                    {
-                        orderModel.CustomerId = customer.Id;
-                    }
-                    else
-                    {
-                        orderModel.CustomerName = orderVM.CustomerName;
-                    }
-                }
-                else
-                {
-                    orderModel.CustomerName = orderVM.CustomerName;
+                    orderModel.DefaultTaxes += $"{tax.Name} - {tax.Rate * 100} %, ";
                 }
 
                 if (orderVM.ProductInOrders != null)
@@ -167,6 +141,7 @@ public class OrderController : Controller
                 }
                 else
                 {
+                    Console.WriteLine("Lỗi 2");
                     throw new Exception();
                 }
             }
@@ -176,7 +151,7 @@ public class OrderController : Controller
             }
         }
         catch
-        { return BadRequest("Tạo hóa đơn thất bại"); }
+        { throw; }
     }
 
     [HttpPost("completed-order/{id}")]
@@ -226,84 +201,6 @@ public class OrderController : Controller
             return BadRequest("Hoàn thành đơn thất bại");
         }
     }
-
-    // [HttpGet("update/{id}")]
-    // public async Task<IActionResult> Update(int id)
-    // {
-    //     try
-    //     {
-    //         var user = await _userManager.GetUserAsync(User);
-
-    //         var orderUpdate = await _dbContext.Orders.Include(o => o.Customer).Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
-
-    //         if (orderUpdate != null)
-    //         {
-    //             var orderVMUpdate = GetOrderVMFromOrderModel(orderUpdate);
-
-    //             if (orderUpdate.Customer != null) orderVMUpdate.CustomerId = orderUpdate.Customer.Id;
-
-    //             ViewData["customers"] = await GetCustomers();
-
-    //             return View(orderVMUpdate);
-    //         }
-    //     }
-    //     catch { }
-
-    //     return null;
-    // }
-
-    // [HttpPost("update/{id}")]
-    // public async Task<IActionResult> Update(int id, OrderVM orderVM)
-    // {
-    //     try
-    //     {
-    //         if (ModelState.IsValid)
-    //         {
-    //             var user = await _userManager.GetUserAsync(User);
-    //             var orderUpdate = await _dbContext.Orders.Where(o => o.Id == id && o.UserId == user.Id).FirstOrDefaultAsync();
-
-    //             if (orderUpdate != null)
-    //             {
-    //                 orderUpdate.CustomerName = orderVM.CustomerName;
-    //                 orderUpdate.Completed = orderVM.Completed;
-    //                 orderUpdate.UpdatedAt = DateTime.Now;
-
-    //                 if (orderVM.CustomerId != 0)
-    //                 {
-    //                     var customer = await GetCustomerById(orderVM.CustomerId);
-    //                     if (customer != null)
-    //                     {
-    //                         orderUpdate.CustomerId = customer.Id;
-    //                     }
-    //                     else
-    //                     {
-    //                         orderUpdate.CustomerName = orderVM.CustomerName;
-    //                     }
-    //                 }
-    //                 else
-    //                 {
-    //                     orderUpdate.CustomerName = orderVM.CustomerName;
-    //                 }
-
-    //                 _dbContext.Orders.Update(orderUpdate);
-    //                 int result = await _dbContext.SaveChangesAsync();
-
-    //                 return Ok("Cập nhật hóa đơn thành công");
-    //             }
-    //             else
-    //             {
-    //                 throw new Exception();
-    //             }
-    //         }
-    //         else
-    //         {
-    //             return BadRequest("Thông tin nhập vào không hợp lệ");
-    //         }
-
-    //     }
-    //     catch
-    //     { return BadRequest("Cập nhật hóa đơn thất bại"); }
-    // }
 
     //Xóa hóa đơn
     [HttpPost("delete/{id}")]
@@ -378,11 +275,11 @@ public class OrderController : Controller
             Id = order.Id,
             Name = order.Name,
             CustomerName = order.CustomerName,
-            CustomerId = order.CustomerId,
+            CustomerPhoneNumber = order.CustomerPhoneNumber,
             Completed = order.Completed,
             OrderDetails = order.OrderDetails,
             DefaultTaxes = order.DefaultTaxes,
-            TotalBeforeDefautTax = order.TotalBeforeDefaultTax,
+            TotalBeforeDefaultTax = order.TotalBeforeDefaultTax,
             TotalAfterTax = order.TotalAfterTax
         };
 
@@ -393,32 +290,11 @@ public class OrderController : Controller
                 orderDetail.Order = null;
             }
         }
-
-        if (order.Customer != null)
-        {
-            orderVM.CustomerName = order.Customer.Name;
-        }
+        
 
         orderVM.CreatedAt = order.CreatedAt.ToString("dd/MM/yyyy");
-        orderVM.UpdatedAt = order.UpdatedAt.ToString("dd/MM/yyyy");
 
         return orderVM;
-    }
-
-    private async Task<List<CustomerModel>> GetCustomers()
-    {
-        var user = await _userManager.GetUserAsync(User);
-        return await _dbContext.Customers.Where(c => c.UserId == user.Id).ToListAsync();
-    }
-
-    private async Task<CustomerModel> GetCustomerById(int? id)
-    {
-        if (id.HasValue)
-        {
-            var user = await _userManager.GetUserAsync(User);
-            return await _dbContext.Customers.Where(c => c.UserId == user.Id && c.Id == id).FirstOrDefaultAsync();
-        }
-        return null;
     }
 
     private async Task<List<ProductModel>> GetProducts()

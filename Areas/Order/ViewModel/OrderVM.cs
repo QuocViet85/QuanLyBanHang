@@ -13,8 +13,7 @@ public class OrderVM
     [Display(Name = "Tên khách hàng")]
     public string? CustomerName { set; get; }
 
-    [Display(Name = "Khách hàng của bạn")]
-    public int? CustomerId { set; get; }
+    public int? CustomerPhoneNumber { set; get; }
 
     [Display(Name = "Hoàn thành")]
     public bool Completed { set; get; }
@@ -23,15 +22,13 @@ public class OrderVM
     public List<OrderDetailModel>? OrderDetails { set; get; }
     public string? DefaultTaxes { set; get; }
 
-    public decimal? TotalBeforeDefautTax { set; get; }
+    public decimal? TotalBeforeDefaultTax { set; get; }
     public decimal? TotalAfterTax { set; get; }
     public string? CreatedAt { set; get; }
-    
-    public string? UpdatedAt { set; get; }
 }
 
 public class ProductInOrder
 {
-    public int? ProductId { set; get; }
-    public int? Quantity { set; get; }
+    public int ProductId { set; get; }
+    public int Quantity { set; get; }
 }

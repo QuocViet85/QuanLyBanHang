@@ -6,10 +6,10 @@
       <th scope="col">Stt</th>
       <th scope="col">Tên</th>
       <th scope="col">Khách hàng</th>
+      <th scope="col">Số điện thoại</th>
       <th scope="col">Hoàn thành</th>
       <th scope="col">Chi tiết</th>
       <th scope="col">Ngày thêm</th>
-      <th scope="col">Ngày sửa</th>
       <th scope="col"></th>
       <th scope="col"></th>
     </tr>
@@ -19,6 +19,7 @@
       <th scope="row">{{ key + 1 }}</th>
       <td>{{ item.name }}</td>
       <td>{{ item.customerName }}</td>
+      <td>{{ item.customerPhoneNumber }}</td>
       <td>
         {{ item.completed ? "Hoàn thành" : "Chưa hoàn thành" }}
         <div ng-if="!item.completed">
@@ -27,7 +28,6 @@
       </td>
       <td><a ng-click="openPopupDetail(item)" class="btn btn-info btn-sm">Chi tiết</a></td>
       <td>{{ item.createdAt }}</td>
-      <td>{{ item.updatedAt }}</td>
       <td><a ng-click="openPopupDestroy(item)" class="btn btn-warning btn-sm" href="">Hủy</a></td>
       <td><a ng-click="openPopupDelete(item)" class="btn btn-danger btn-sm" href="">Xóa</a></td>
     </tr>

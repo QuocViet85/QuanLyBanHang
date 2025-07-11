@@ -1,5 +1,6 @@
 <h2>Danh sách sản phẩm</h2>
 <button type="button" class="btn btn-primary text-left" ng-click="openPopupCreate()">Tạo sản phẩm</button>
+<button type="button" class="btn btn-light" ng-click="openPopupCart()">Giỏ hàng</button>
 
 <table class="table">
   <thead>
@@ -30,12 +31,13 @@
       <td>{{ item.discount }}</td>
       <td>{{ item.createdAt }}</td>
       <td>{{ item.updatedAt }}</td>
-      <td><button ng-click="openPopupDescription(item)" class="btn btn-info" href="">Xem mô tả</button></td>
-      <td><button ng-click="openPopupDynamicAttribute(item)" class="btn btn-dark" href="">Các thuộc tính động</button></td>
-      <td><a ng-click="openPopupCategory(item)" class="btn btn-primary" href="">Danh mục</a></td>
-      <td><a ng-click="openPopupTax(item)" class="btn btn-success" href="">Thuế</a></td>
-      <td><a ng-click="openPopupUpdate(item)" class="btn btn-warning" href="">Sửa</a></td>
-      <td><a ng-click="openPopupDelete(item)" class="btn btn-danger" href="">Xóa</a></td>
+      <td><button ng-click="openPopupDescription(item)" class="btn btn-info btn-sm" href="">Xem mô tả</button></td>
+      <td><button ng-click="openPopupDynamicAttribute(item)" class="btn btn-dark btn-sm" href="">Các thuộc tính động</button></td>
+      <td><a ng-click="openPopupCategory(item)" class="btn btn-primary btn-sm" href="">Danh mục</a></td>
+      <td><a ng-click="openPopupTax(item)" class="btn btn-success btn-sm" href="">Thuế</a></td>
+      <td><a ng-click="openPopupSell(item)" class="btn btn-light btn-sm" href="">Bán</a></td>
+      <td><a ng-click="openPopupUpdate(item)" class="btn btn-warning btn-sm" href="">Sửa</a></td>
+      <td><a ng-click="openPopupDelete(item)" class="btn btn-danger btn-sm" href="">Xóa</a></td>
     </tr>
   </tbody>
 </table>
@@ -59,3 +61,7 @@
 <div ng-include="templateUpdate"></div>
 
 <div ng-include="templateDelete"></div>
+
+<div ng-include="templateSell"></div>
+
+<div ng-include="templateCart"></div>

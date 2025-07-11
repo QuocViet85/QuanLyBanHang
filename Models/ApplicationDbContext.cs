@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using WebBanHang.Areas.Category.Model;
 using WebBanHang.Areas.DynamicAttribute.Model;
 using WebBanHang.Areas.Product.Model;
-using WebBanHang.Areas.Customer.Model;
 using WebBanHang.Areas.Order.Model;
 using WebBanHang.Areas.Tax.Model;
 
@@ -78,7 +77,6 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     public DbSet<AttributeValueModel> AttributeValues { set; get; }
     public DbSet<OrderModel> Orders { set; get; }
     public DbSet<OrderDetailModel> OrderDetails { set; get; }
-    public DbSet<CustomerModel> Customers { set; get; }
     public DbSet<TaxModel> Taxes { set; get; }
     public DbSet<TaxProductModel> TaxProducts { set; get; }
 }

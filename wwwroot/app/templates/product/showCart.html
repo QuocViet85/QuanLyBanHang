@@ -1,0 +1,86 @@
+<div class="overlay" ng-if="showPopupCart">
+  <div class="popup">
+    <h3>Giỏ hàng</h3>
+
+    <table>
+        <tr>
+            <td>
+                Tên đơn hàng: 
+            </td>
+            <td>
+                <input type="text" id="orderName">
+            </td>
+
+            <td>
+                Tên khách hàng: 
+            </td>
+            <td>
+                <input type="text" id="customerName">
+            </td>
+            <td>
+                Số điện thoại: 
+            </td>
+            <td>
+                <input type="number" id="customerPhoneNumber">
+            </td>
+        </tr>
+    </table>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">STT</th>
+                <th scope="col">Tên hàng hóa</th>
+                <th scope="col">Số lượng</th>
+                <th scope="col">Đơn giá</th>
+                <th scope="col">Giảm giá</th>
+                <th scope="col">Thuế riêng</th>
+                <th scope="col">Thành tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="(key, item) in cart">
+                <th scope="row">{{ key + 1 }}</th>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.product.price }} VNĐ</td>
+                <td>{{ item.product.discount }} VNĐ</td>
+                <td>
+                    <span ng-repeat="privateTax in item.product.privateTaxes" style="font-size: x-small;">{{ privateTax.name }} - {{ privateTax.rate * 100 }}%, </span>
+                </td>
+                <td>{{ item.priceAfterPrivateTaxes }} VNĐ</td>
+            </tr>
+            <tr>
+                <td>
+                    Tổng tiền trước thuế chung: 
+                </td>
+                <td>
+                    {{ cart.totalBeforeDefaultTax }} VNĐ
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Thuế chung: 
+                </td>
+                <td>
+                    <span ng-repeat="tax in defaultTaxes" style="font-size: x-small;">{{ tax.name }} - {{ tax.rate }}%, </span>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    Tổng tiền thanh toán: 
+                </td>
+                <td>
+                    {{ cart.totalAfterTax }} VNĐ
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <label for="">Hoàn thành:&nbsp;</label><input type="checkbox" id="orderCompleted">
+    <br>
+
+    <button class="btn btn-primary btn-sm" ng-click="createOrder()">Tạo hóa đơn</button>
+    <button class="btn btn-warning btn-sm" ng-click="deleteCart()">Xóa giỏ hàng</button>
+    <button class="btn btn-danger btn-sm" ng-click="closePopupCart()">Đóng</button>
+  </div>
+</div>

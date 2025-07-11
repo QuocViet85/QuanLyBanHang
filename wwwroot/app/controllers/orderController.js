@@ -86,7 +86,6 @@ function handlePopupDestroyOrder() {
   VARIABLE_ORDER.scope.destroyOrder = destroyOrder;
 
   VARIABLE_ORDER.scope.openPopupDestroy = function (orderNow) {
-    console.log('destroy')
     VARIABLE_ORDER.scope.orderNow = orderNow;
     VARIABLE_ORDER.scope.showPopupDestroy = true;
   };

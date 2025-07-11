@@ -12,12 +12,16 @@ app.controller("productController", [
     $scope.defaultTaxes = [];
     $scope.privateTaxes = [];
     $scope.dynamicAttributes = [];
+    $scope.customers = [];
+
+    $scope.cart = []; //giỏ hàng
 
     handlePaginateProduct();
     fetchProducts();
     fetchAllCategories();
     fetchAllTaxes();
     fetAllDynamicAttributes();
+    fetchAllCustomer();
 
     handlePopupProduct();
   },
@@ -81,6 +85,12 @@ function fetchAllTaxes() {
   });
 }
 
+function fetchAllCustomer() {
+  VARIABLE_PRODUCT.http.get("api/customer").then(function (res) {
+    VARIABLE_PRODUCT.scope.customers = res.data.customers;
+  })
+}
+
 function handlePopupProduct() {
   setTemplatePopupProduct();
   handlePopupDescriptionProduct();
@@ -90,6 +100,8 @@ function handlePopupProduct() {
   handlePopupCreateProduct();
   handlePopupUpdateProduct();
   handlePopupDeleteProduct();
+  handlePopupSellProduct();
+  handlePopupCartProduct();
 }
 
 function setTemplatePopupProduct() {
@@ -105,12 +117,15 @@ function setTemplatePopupProduct() {
     window.location.origin + "/app/templates/product/showCreate.html";
   VARIABLE_PRODUCT.scope.templateUpdate =
     window.location.origin + "/app/templates/product/showUpdate.html";
-    VARIABLE_PRODUCT.scope.templateDelete =
+  VARIABLE_PRODUCT.scope.templateDelete =
     window.location.origin + "/app/templates/product/showDelete.html";
+  VARIABLE_PRODUCT.scope.templateSell =
+  window.location.origin + "/app/templates/product/showSell.html";
+  VARIABLE_PRODUCT.scope.templateCart =
+  window.location.origin + "/app/templates/product/showCart.html";
 }
 
 function handlePopupDescriptionProduct() {
-  VARIABLE_PRODUCT.scope.description = null;
   VARIABLE_PRODUCT.scope.showPopupDescription = false;
 
   VARIABLE_PRODUCT.scope.openPopupDescription = function (productNow) {
@@ -119,7 +134,7 @@ function handlePopupDescriptionProduct() {
   };
 
   VARIABLE_PRODUCT.scope.closePopupDescription = function () {
-    VARIABLE_PRODUCT.scope.description = null;
+    VARIABLE_PRODUCT.scope.productNow = null;
     VARIABLE_PRODUCT.scope.showPopupDescription = false;
   };
 }
@@ -171,7 +186,7 @@ function handlePopup_Tax() {
 }
 
 function calculatePriceAfterTax(productNow) {
-  productNow.taxes = [];
+  productNow.privateTaxes = [];
   var realPrice = productNow.price;
   if (productNow.discount) {
     realPrice -= productNow.discount;
@@ -182,18 +197,18 @@ function calculatePriceAfterTax(productNow) {
   if (VARIABLE_PRODUCT.scope.privateTaxes) {
     for (const tax of VARIABLE_PRODUCT.scope.privateTaxes) {
       if (productNow.privateTaxIds.includes(tax.id)) {
-        productNow.taxes.push(tax);
+        productNow.privateTaxes.push(tax);
         productNow.priceAfterPrivateTaxes *= (1 + tax.rate);
       }
     }
   }
 
   productNow.priceAfterPrivateTaxes = Math.round(productNow.priceAfterPrivateTaxes);
+
   productNow.priceAfterTaxes = productNow.priceAfterPrivateTaxes;
 
   if (VARIABLE_PRODUCT.scope.defaultTaxes) {
     for (const tax of VARIABLE_PRODUCT.scope.defaultTaxes) {
-      productNow.taxes.push(tax);
       productNow.priceAfterTaxes *= (1 + tax.rate);
     }
   }
@@ -341,4 +356,110 @@ function deleteProduct() {
     VARIABLE_PRODUCT.http.post(`api/product/delete/${VARIABLE_PRODUCT.scope.productNow.id}`).then((res) => {
       fetchProducts();
     });
+}
+
+function handlePopupSellProduct() {
+  VARIABLE_PRODUCT.scope.showPopupSell = false;
+
+  VARIABLE_PRODUCT.scope.pushProductToCart = pushProductToCart;
+
+  VARIABLE_PRODUCT.scope.openPopupSell = function (productNow) {
+    VARIABLE_PRODUCT.scope.productNow = productNow;
+    VARIABLE_PRODUCT.scope.showPopupSell = true;
+  };
+
+  VARIABLE_PRODUCT.scope.closePopupSell = function () {
+    VARIABLE_PRODUCT.scope.productNow = null;
+    VARIABLE_PRODUCT.scope.showPopupSell = false;
+  };
+}
+
+function pushProductToCart(productNow) {
+  var quantity = document.getElementById("quantityProduct").value;
+  quantity = +quantity;
+
+  if (quantity > 0) {
+    var existInCart = false;
+
+    for (var item of VARIABLE_PRODUCT.scope.cart) {
+      if (productNow === item.product) {
+        existInCart = true;
+
+        if (quantity + item.quantity <= productNow.quantity) {
+          item.quantity = quantity + item.quantity;
+        }
+      }
+    }
+
+    if (!existInCart) {
+      if (quantity <= productNow.quantity) {
+        const productInCart = {
+        product: productNow,
+        quantity: quantity
+        }
+
+        VARIABLE_PRODUCT.scope.cart.push(productInCart);
+      }
+      
+    }
+  }
+  VARIABLE_PRODUCT.scope.closePopupSell();
+}
+
+function handlePopupCartProduct() {
+  VARIABLE_PRODUCT.scope.showPopupCart = false;
+
+  VARIABLE_PRODUCT.scope.createOrder = createOrder;
+  VARIABLE_PRODUCT.scope.deleteCart = deleteCart;
+
+  VARIABLE_PRODUCT.scope.openPopupCart = function () {
+    calculatorTotalPriceInCart();
+    VARIABLE_PRODUCT.scope.showPopupCart = true;
+  };
+
+  VARIABLE_PRODUCT.scope.closePopupCart = function () {
+    VARIABLE_PRODUCT.scope.showPopupCart = false;
+  };
+}
+
+function calculatorTotalPriceInCart() {
+  VARIABLE_PRODUCT.scope.cart.totalBeforeDefaultTax = 0;
+  VARIABLE_PRODUCT.scope.cart.totalAfterTax = 0;
+  for (var item of VARIABLE_PRODUCT.scope.cart) {
+    //tính giá 1 sản phẩm(bao gồm thuế riêng, thuế riêng + thuế chung)
+    calculatePriceAfterTax(item.product); 
+
+    //tính giá nhiều sản phẩm cùng loại trong giỏ hàng với số lượng đã chọn (bao gồm thuế riêng, thuế riêng + thuế chung)
+    item.priceAfterPrivateTaxes = item.product.priceAfterPrivateTaxes * item.quantity;
+    item.priceAfterTaxes = item.product.priceAfterTaxes * item.quantity;
+    VARIABLE_PRODUCT.scope.cart.totalBeforeDefaultTax += item.priceAfterPrivateTaxes;
+    VARIABLE_PRODUCT.scope.cart.totalAfterTax += item.priceAfterTaxes;
+  }
+}
+
+function createOrder() {
+  const order = {};
+  order.Name = document.getElementById("orderName").value;
+  order.CustomerName = document.getElementById("customerName").value;
+  order.CustomerPhoneNumber = document.getElementById("customerPhoneNumber").value;
+  order.Completed = document.getElementById("orderCompleted").checked;
+
+  order.ProductInOrders = [];
+  
+  for (var item of VARIABLE_PRODUCT.scope.cart) {
+    order.ProductInOrders.push({
+      ProductId: item.product.id,
+      Quantity: item.quantity
+    });
+  }
+
+  VARIABLE_PRODUCT.http.post("api/order/create", order).then((res) => {
+    if (order.Completed) {
+      fetchProducts();
+    }
+  });
+}
+
+function deleteCart() {
+  VARIABLE_PRODUCT.scope.cart = [];
 }

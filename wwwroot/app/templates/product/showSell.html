@@ -1,0 +1,9 @@
+<div class="overlay" ng-if="showPopupSell">
+  <div class="popup">
+    <h3>Thêm vào giỏ hàng</h3>
+    <p>{{ productNow.name }}</p>
+    <label for="">Số lượng: </label><input type="number" id="quantityProduct">
+    <button class="btn btn-light" ng-click="pushProductToCart(productNow)">Thêm</button>
+    <button class="btn btn-danger" ng-click="closePopupSell()">Đóng</button>
+  </div>
+</div>
