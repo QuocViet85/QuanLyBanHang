@@ -1,6 +1,6 @@
 namespace WebBanHang.Areas.Tax.ViewModel;
 
-public class TaxViewModel
+public class TaxVM
 {
     public int Id { set; get; }
     public string Name { set; get; }

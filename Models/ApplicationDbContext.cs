@@ -31,7 +31,7 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
                 .HasConstraintName("FK_Category_Product");
         });
 
-        builder.Entity<AttributeValueModel>(entity =>
+        builder.Entity<DynamicAttributeValueModel>(entity =>
         {
             entity.HasKey(av => new { av.ProductId, av.AttributeId });
 
@@ -73,8 +73,8 @@ public class ApplicationDbContext : IdentityDbContext<IdentityUser>
     public DbSet<ProductPhotoModel> ProductPhotos { set; get; }
     public DbSet<CategoryModel> Categories { set; get; }
     public DbSet<CategoryProductModel> CategoryProducts { set; get; }
-    public DbSet<AttributeModel> Attributes { set; get; }
-    public DbSet<AttributeValueModel> AttributeValues { set; get; }
+    public DbSet<DynamicAttributeModel> Attributes { set; get; }
+    public DbSet<DynamicAttributeValueModel> AttributeValues { set; get; }
     public DbSet<OrderModel> Orders { set; get; }
     public DbSet<OrderDetailModel> OrderDetails { set; get; }
     public DbSet<TaxModel> Taxes { set; get; }

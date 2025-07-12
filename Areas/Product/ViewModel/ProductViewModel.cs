@@ -16,9 +16,6 @@ public class ProductVM
     [Display(Name = "Số lượng")]
     public int Quantity { set; get; } = 1;
 
-    [Display(Name = "Đang bán")]
-    public bool IsActive { set; get; } = true;
-
     [Display(Name = "Giá")]
     public decimal Price { set; get; }
 

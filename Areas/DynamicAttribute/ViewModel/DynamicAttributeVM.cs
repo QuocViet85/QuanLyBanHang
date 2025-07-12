@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace WebBanHang.Areas.DynamicAttribute.ViewModel;
 
-public class AttributeVM
+public class DynamicAttributeVM
 {
     public int Id { set; get; }
     [Required(ErrorMessage = "Thuộc tính sản phẩm phải có tên")]

@@ -11,6 +11,6 @@ public class AppUser : IdentityUser
     public List<ProductModel> Products { set; get; }
     public List<OrderModel> Orders { set; get; }
     public List<CategoryModel> Categories { set; get; }
-    public List<AttributeModel> Attributes { set; get; }
+    public List<DynamicAttributeModel> Attributes { set; get; }
 
 }

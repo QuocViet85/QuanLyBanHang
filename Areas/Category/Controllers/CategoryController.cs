@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Identity.Client.Extensibility;
 using WebBanHang.Areas.Category.Model;
+using WebBanHang.Areas.Category.Services;
 using WebBanHang.Areas.Category.ViewModel;
 using WebBanHang.Data;
 
@@ -14,12 +15,12 @@ namespace WebBanHang.Areas.Category.Controllers;
 [Authorize]
 public class CategoryController : Controller
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly ICategoryService _categoryService;
     private readonly UserManager<IdentityUser> _userManager;
 
-    public CategoryController(ApplicationDbContext dbContext, UserManager<IdentityUser> userManager)
+    public CategoryController(ICategoryService categoryService, UserManager<IdentityUser> userManager)
     {
-        _dbContext = dbContext;
+        _categoryService = categoryService;
         _userManager = userManager;
     }
 
@@ -29,32 +30,11 @@ public class CategoryController : Controller
         {
             var user = await _userManager.GetUserAsync(User);
 
-            List<CategoryModel> categories;
-
-            if (pageNumber > 0 && limit > 0)
-            {
-                categories = await _dbContext.Categories.Where(c => c.UserId == user.Id)
-                                                        .Skip((pageNumber - 1) * limit)
-                                                        .Take(limit)
-                                                        .ToListAsync(); 
-            }
-            else
-            {
-                categories = await _dbContext.Categories.Where(c => c.UserId == user.Id).ToListAsync();
-            }
-
-            int totalCategories = await _dbContext.Categories.CountAsync();
-
-            List<CategoryVM> categoryVMs = new List<CategoryVM>();
-
-            if (categories?.Count > 0)
-            {
-                categoryVMs = categories.Select(c => GetCategoryVMFromCategoryModel(c)).ToList();
-            }
+            var result = await _categoryService.GetCategories(pageNumber, limit, user.Id);
             return Ok(new
             {
-                categories = categoryVMs,
-                totalCategories = totalCategories
+                categories = result.categoryVMs,
+                totalCategories = result.totalCategories
             });
         }
         catch { throw new Exception("Lấy danh mục sản phẩm thất bại"); }
@@ -69,17 +49,7 @@ public class CategoryController : Controller
             {
                 var user = await _userManager.GetUserAsync(User);
 
-                var categoryModel = new CategoryModel()
-                {
-                    Name = categoryVM.Name,
-                    Description = categoryVM.Description,
-                    UserId = user.Id,
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
-                };
-
-                await _dbContext.Categories.AddAsync(categoryModel);
-                await _dbContext.SaveChangesAsync();
+                await _categoryService.Create(categoryVM, user.Id);
 
                 return Ok("Tạo danh mục sản phẩm thành công");
             }
@@ -99,23 +69,10 @@ public class CategoryController : Controller
             if (ModelState.IsValid)
             {
                 var user = await _userManager.GetUserAsync(User);
-                CategoryModel categoryUpdate = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
 
-                if (categoryUpdate != null)
-                {
-                    categoryUpdate.Name = categoryVM.Name;
-                    categoryUpdate.Description = categoryVM.Description;
-                    categoryUpdate.UpdatedAt = DateTime.Now;
+                await _categoryService.Update(id, categoryVM, user.Id);
 
-                    _dbContext.Categories.Update(categoryUpdate);
-                    int result = await _dbContext.SaveChangesAsync();
-
-                    return Ok("Cập nhật danh mục sản phẩm thành công");
-                }
-                else
-                {
-                    throw new Exception();
-                }
+                return Ok("Cập nhật danh mục sản phẩm thành công");
             }
             else
             {
@@ -132,31 +89,11 @@ public class CategoryController : Controller
         try
         {
             var user = await _userManager.GetUserAsync(User);
-            CategoryModel categoryDelete = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == user.Id).FirstOrDefaultAsync();
-            if (categoryDelete != null)
-            {
-                _dbContext.Categories.Remove(categoryDelete);
-                int result = await _dbContext.SaveChangesAsync();
 
-                return Ok("Xóa danh mục sản phẩm thành công");
-            }
-            else
-            {
-                throw new Exception();
-            }
+            await _categoryService.Delete(id, user.Id);
+
+            return Ok("Xóa danh mục sản phẩm thành công");
         }
         catch { return BadRequest("Xóa danh mục sản phẩm thất bại"); }
-    }
-
-    private CategoryVM GetCategoryVMFromCategoryModel(CategoryModel category)
-    {
-        return new CategoryVM()
-        {
-            Id = category.Id,
-            Name = category.Name,
-            Description = category.Description,
-            CreatedAt = category.CreatedAt,
-            UpdatedAt = category.UpdatedAt
-        };
     }
 }
