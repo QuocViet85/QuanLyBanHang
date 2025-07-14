@@ -29,17 +29,17 @@
                 <th scope="row">{{ key + 1 }}</th>
                 <td>{{ item.productName }}</td>
                 <td>{{ item.quantity }}</td>
-                <td>{{ item.price }} VNĐ</td>
+                <td>{{ item.price }} </td>
                 <td>{{ item.discount }}</td>
                 <td><span style="font-size: x-small;">{{ item.privateTaxes }}</span></td>
-                <td>{{ item.priceAfterPrivateTax }} VNĐ</td>
+                <td>{{ item.priceAfterPrivateTaxFormat }} </td>
             </tr>
             <tr>
                 <td>
                     Tổng tiền trước thuế chung: 
                 </td>
                 <td>
-                    {{ orderNow.totalBeforeDefaultTax }} VNĐ
+                    {{ orderNow.totalBeforeDefaultTaxFormat }} 
                 </td>
             </tr>
             <tr>
@@ -55,7 +55,7 @@
                     Tổng tiền thanh toán: 
                 </td>
                 <td>
-                    {{ orderNow.totalAfterTax }} VNĐ
+                    {{ orderNow.totalAfterTaxFormat }} 
                 </td>
             </tr>
         </tbody>

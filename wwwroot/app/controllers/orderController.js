@@ -71,6 +71,7 @@ function handlePopupDetailOrder() {
 
   VARIABLE_ORDER.scope.openPopupDetail = function (orderNow) {
     VARIABLE_ORDER.scope.orderNow = orderNow;
+    formatCurrencyOrder(orderNow);
     VARIABLE_ORDER.scope.showPopupDetail = true;
   };
 
@@ -78,6 +79,21 @@ function handlePopupDetailOrder() {
     VARIABLE_ORDER.scope.orderNow = null;
     VARIABLE_ORDER.scope.showPopupDetail = false;
   };
+}
+
+function formatCurrencyOrder(order) {
+  if (!order.formatCurrency) {
+    order.totalBeforeDefaultTaxFormat = formatCurrency(order.totalBeforeDefaultTax);
+    order.totalAfterTaxFormat = formatCurrency(order.totalAfterTax);
+
+    console.log(order.orderDetails);
+
+    for (const orderDetail of order.orderDetails) {
+      orderDetail.price = formatCurrency(orderDetail.price);
+      orderDetail.priceBeforePrivateTaxFormat = formatCurrency(orderDetail.priceBeforePrivateTax);
+      orderDetail.priceAfterPrivateTaxFormat = formatCurrency(orderDetail.priceAfterPrivateTax);
+    }
+  }
 }
 
 function handlePopupDestroyOrder() {

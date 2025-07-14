@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
+using WebBanHang.Areas.Product.Model;
 
 namespace WebBanHang.Areas.Category.Model;
 
@@ -10,12 +11,16 @@ public class CategoryModel
     [Key]
     public int Id { set; get; }
     public string Name { set; get; }
-    public string Description { set; get; }
+
+    [Required]
+    public string Code { set; get; }
+    public string? Description { set; get; }
     public string UserId { set; get; }
 
     [ForeignKey("UserId")]
     public IdentityUser User { set; get; }
-    public List<CategoryProductModel>? CategoryProducts { set; get; }
+    public List<ProductModel>? Products { set; get; }
+
     public DateTime CreatedAt { set; get; }
     public DateTime UpdatedAt { set; get; }
 }

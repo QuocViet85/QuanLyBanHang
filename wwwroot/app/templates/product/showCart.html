@@ -43,19 +43,19 @@
                 <th scope="row">{{ key + 1 }}</th>
                 <td>{{ item.product.name }}</td>
                 <td>{{ item.quantity }}</td>
-                <td>{{ item.product.price }} VNĐ</td>
-                <td>{{ item.product.discount }} VNĐ</td>
+                <td>{{ item.product.priceFormat }}</td>
+                <td>{{ item.product.discount * 100 }}%</td>
                 <td>
                     <span ng-repeat="privateTax in item.product.privateTaxes" style="font-size: x-small;">{{ privateTax.name }} - {{ privateTax.rate * 100 }}%, </span>
                 </td>
-                <td>{{ item.priceAfterPrivateTaxes }} VNĐ</td>
+                <td>{{ item.priceAfterPrivateTaxesFormat }}</td>
             </tr>
             <tr>
                 <td>
                     Tổng tiền trước thuế chung: 
                 </td>
                 <td>
-                    {{ cart.totalBeforeDefaultTax }} VNĐ
+                    {{ cart.totalBeforeDefaultTaxFormat }}
                 </td>
             </tr>
             <tr>
@@ -71,7 +71,7 @@
                     Tổng tiền thanh toán: 
                 </td>
                 <td>
-                    {{ cart.totalAfterTax }} VNĐ
+                    {{ cart.totalAfterTaxFormat }} VNĐ
                 </td>
             </tr>
         </tbody>

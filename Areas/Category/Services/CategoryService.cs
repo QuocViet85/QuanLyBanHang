@@ -43,14 +43,14 @@ public class CategoryService : ICategoryService
     }
     public async Task Create(CategoryVM categoryVM, string userId)
     {
-        var categoryModel = new CategoryModel()
+        bool existCode = await _dbContext.Categories.AnyAsync(c => c.Code == categoryVM.Code && c.UserId == userId);
+
+        if (existCode)
         {
-            Name = categoryVM.Name,
-            Description = categoryVM.Description,
-            UserId = userId,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
-        };
+            throw new Exception("Đã có danh mục có mã code này");
+        }
+
+        var categoryModel = CreateOrUpdateCategoryModelFromCategoryVM(categoryVM, userId);
 
         await _dbContext.Categories.AddAsync(categoryModel);
         await _dbContext.SaveChangesAsync();
@@ -62,17 +62,22 @@ public class CategoryService : ICategoryService
 
         if (categoryUpdate != null)
         {
-            categoryUpdate.Name = categoryVM.Name;
-            categoryUpdate.Description = categoryVM.Description;
-            categoryUpdate.UpdatedAt = DateTime.Now;
+            bool existCode = await _dbContext.Categories.AnyAsync(c => c.Code == categoryVM.Code && c.Id != categoryUpdate.Id && c.UserId == userId);
+
+            if (existCode)
+            {
+                throw new Exception("Đã có danh mục có mã code này");
+            }
+
+            categoryUpdate = CreateOrUpdateCategoryModelFromCategoryVM(categoryVM, userId, categoryUpdate);
 
             _dbContext.Categories.Update(categoryUpdate);
             int result = await _dbContext.SaveChangesAsync();
         }
         else
         {
-            throw new Exception();
-        }    
+            throw new Exception("Không tìm thấy danh mục sản phẩm");
+        }
     }
 
     public async Task Delete(int id, string userId)
@@ -85,7 +90,7 @@ public class CategoryService : ICategoryService
         }
         else
         {
-            throw new Exception();
+            throw new Exception("Không tìm thấy danh mục sản phẩm");
         }
     }
 
@@ -96,8 +101,34 @@ public class CategoryService : ICategoryService
             Id = category.Id,
             Name = category.Name,
             Description = category.Description,
-            CreatedAt = category.CreatedAt,
-            UpdatedAt = category.UpdatedAt
+            Code = category.Code
         };
+    }
+    
+    public CategoryModel CreateOrUpdateCategoryModelFromCategoryVM(CategoryVM categoryVM, string userId, CategoryModel categoryUpdate = null)
+    {
+        if (categoryUpdate == null)
+        {
+            var category = new CategoryModel();
+
+            category.Name = categoryVM.Name;
+            category.Description = categoryVM.Description;
+            category.Code = categoryVM.Code;
+            category.UserId = userId;
+            category.CreatedAt = DateTime.Now;
+            category.UpdatedAt = DateTime.Now;
+
+            return category;
+        }
+        else
+        {
+            categoryUpdate.Name = categoryVM.Name;
+            categoryUpdate.Description = categoryVM.Description;
+            categoryUpdate.Code = categoryVM.Code;
+
+            categoryUpdate.UpdatedAt = DateTime.Now;
+
+            return categoryUpdate;
+        }
     }
 }

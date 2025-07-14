@@ -12,12 +12,15 @@
         </tr>
         <tr>
             <td>Giá: </td>
-            <td><input type="number" id="price" value="{{ productNow.price }}"></td>
+            <td>
+                <input type="text" id="priceShow" value="{{ productNow.priceFormat }}">
+                <input type="number" id="price" hidden value="{{ productNow.price }}">
+            </td>
             <!-- Dùng value không dùng ng-model để trong trường hợp không ấn sửa và tắt đi bật lại popup thì vẫn hiển thị giá trị ban đầu đúng với server -->
         </tr>
         <tr>
-            <td>Giảm giá: </td>
-            <td><input type="number" id="discount" value="{{ productNow.discount }}"></td>
+            <td>Giảm giá (%): </td>
+            <td><input type="number" id="discount" value="{{ productNow.discount * 100 }}"></td>
         </tr>
         <tr>
             <td>Mô tả: </td>

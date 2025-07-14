@@ -1,22 +1,20 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client.Extensibility;
-using WebBanHang.Areas.Category.Model;
 using WebBanHang.Areas.Category.Services;
 using WebBanHang.Areas.Category.ViewModel;
-using WebBanHang.Data;
 
 namespace WebBanHang.Areas.Category.Controllers;
 
 [Area("Category")]
 [Route("api/category")]
-[Authorize]
+// [Authorize]
 public class CategoryController : Controller
 {
     private readonly ICategoryService _categoryService;
     private readonly UserManager<IdentityUser> _userManager;
+
+    public string userDemo = "da1c87e4-0df8-4000-8bac-79b48d2082c4";
 
     public CategoryController(ICategoryService categoryService, UserManager<IdentityUser> userManager)
     {
@@ -30,7 +28,7 @@ public class CategoryController : Controller
         {
             var user = await _userManager.GetUserAsync(User);
 
-            var result = await _categoryService.GetCategories(pageNumber, limit, user.Id);
+            var result = await _categoryService.GetCategories(pageNumber, limit, userDemo);
             return Ok(new
             {
                 categories = result.categoryVMs,
@@ -47,9 +45,9 @@ public class CategoryController : Controller
         {
             if (ModelState.IsValid)
             {
-                var user = await _userManager.GetUserAsync(User);
+                //var user = await _userManager.GetUserAsync(User);
 
-                await _categoryService.Create(categoryVM, user.Id);
+                await _categoryService.Create(categoryVM, userDemo);
 
                 return Ok("Tạo danh mục sản phẩm thành công");
             }
@@ -68,9 +66,9 @@ public class CategoryController : Controller
         {
             if (ModelState.IsValid)
             {
-                var user = await _userManager.GetUserAsync(User);
+                //var user = await _userManager.GetUserAsync(User);
 
-                await _categoryService.Update(id, categoryVM, user.Id);
+                await _categoryService.Update(id, categoryVM, userDemo);
 
                 return Ok("Cập nhật danh mục sản phẩm thành công");
             }
@@ -80,7 +78,7 @@ public class CategoryController : Controller
             }
             
         }
-        catch { return BadRequest("Cập nhật danh mục sản phẩm thất bại"); }
+        catch { throw; }
     }
 
     [HttpPost("delete/{id}")]
@@ -88,9 +86,9 @@ public class CategoryController : Controller
     {
         try
         {
-            var user = await _userManager.GetUserAsync(User);
+            //var user = await _userManager.GetUserAsync(User);
 
-            await _categoryService.Delete(id, user.Id);
+            await _categoryService.Delete(id, userDemo);
 
             return Ok("Xóa danh mục sản phẩm thành công");
         }

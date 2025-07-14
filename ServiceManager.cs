@@ -1,10 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using WebBanHang.Areas.Category.Services;
-using WebBanHang.Areas.DynamicAttribute.Services;
-using WebBanHang.Areas.Order.Services;
 using WebBanHang.Areas.Product.Services;
-using WebBanHang.Areas.Tax.Services;
 using WebBanHang.Data;
 
 public static class ServiceManager
@@ -39,9 +36,6 @@ public static class ServiceManager
     public static void SetResourceService(IServiceCollection services)
     {
         services.AddScoped<IProductService, ProductService>();
-        services.AddScoped<ITaxService, TaxService>();
-        services.AddScoped<IOrderService, OrderService>();
-        services.AddScoped<IDynamicAttributeService, DynamicAttributeService>();
         services.AddScoped<ICategoryService, CategoryService>();
     }
 }

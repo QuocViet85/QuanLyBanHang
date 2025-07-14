@@ -5,7 +5,7 @@ namespace WebBanHang.Areas.Product.Services;
 
 public interface IProductService
 {
-    public Task<(List<ProductVM> productVMs, int totalProducts)> GetProducts(int pageNumber, int limit, string userId);
+    public Task<(List<ProductVM> productVMs, int totalProducts)> GetProducts(int pageNumber, int limit, string userId, string searchByName, string searchByCode, string searchByCategory);
 
     public Task Create(ProductVM productVM, string userId);
 
@@ -15,11 +15,5 @@ public interface IProductService
 
     public ProductVM GetProductVMFromProductModel(ProductModel product);
 
-    public Task SetCategoryProducts(int productId, List<int> categoryIds);
-
-    public Task SetPrivateTax(int productId, List<int> taxIds);
-
-    public Task SetDynamicAttributeValue(int productId, Dictionary<int, string> dynamicAttributes);
-
-    public Task DeleteRelations(int id);
+    public ProductModel CreateOrUpdateProductModelFromProductVM(ProductVM productVM, string userId, ProductModel productUpdate = null);
 }

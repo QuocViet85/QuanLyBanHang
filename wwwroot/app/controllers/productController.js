@@ -55,6 +55,10 @@ function fetchProducts() {
   VARIABLE_PRODUCT.http.get(`api/product?pageNumber=${VARIABLE_PRODUCT.scope.paginate.pageNumber}&limit=${VARIABLE_PRODUCT.scope.paginate.limit}`).then(function (res) {
     VARIABLE_PRODUCT.scope.products = res.data.products;
     handlePaginateProduct(+res.data.totalProducts);
+
+    for (var product of VARIABLE_PRODUCT.scope.products) {
+      product.priceFormat = formatCurrency(product.price);
+    }
   });
 }
 
@@ -189,7 +193,7 @@ function calculatePriceAfterTax(productNow) {
   productNow.privateTaxes = [];
   var realPrice = productNow.price;
   if (productNow.discount) {
-    realPrice -= productNow.discount;
+    realPrice -= productNow.price * productNow.discount;
   }
 
   productNow.priceAfterPrivateTaxes = realPrice;
@@ -214,6 +218,7 @@ function calculatePriceAfterTax(productNow) {
   }
 
   productNow.priceAfterTaxes = Math.round(productNow.priceAfterTaxes);
+  productNow.priceAfterTaxesFormat = formatCurrency(productNow.priceAfterTaxes);
 }
 
 function handlePopupCreateProduct() {
@@ -223,6 +228,7 @@ function handlePopupCreateProduct() {
 
   VARIABLE_PRODUCT.scope.openPopupCreate = function () {
     VARIABLE_PRODUCT.scope.showPopupCreate = true;
+    formatCurrencyInput('priceShow', 'price');
   };
 
   VARIABLE_PRODUCT.scope.closePopupCreate = function () {
@@ -235,7 +241,7 @@ function createProduct() {
   product.Name = document.getElementById("name").value;
   product.Quantity = document.getElementById("quantity").value;
   product.Price = document.getElementById("price").value;
-  product.Discount = document.getElementById("discount").value;
+  product.Discount = document.getElementById("discount").value / 100;
   product.Description = document.getElementById("description").value;
 
   const categoryIds = document.getElementsByClassName("categoryIds");
@@ -283,6 +289,7 @@ function handlePopupUpdateProduct() {
   VARIABLE_PRODUCT.scope.openPopupUpdate = function (productNow) {
     VARIABLE_PRODUCT.scope.productNow = productNow;
     VARIABLE_PRODUCT.scope.showPopupUpdate = true;
+    formatCurrencyInput('priceShow', 'price');
   };
 
   VARIABLE_PRODUCT.scope.closePopupUpdate = function () {
@@ -296,7 +303,7 @@ function updateProduct() {
     product.Name = document.getElementById("name").value;
     product.Quantity = document.getElementById("quantity").value;
     product.Price = document.getElementById("price").value;
-    product.Discount = document.getElementById("discount").value;
+    product.Discount = document.getElementById("discount").value / 100;
     product.Description = document.getElementById("description").value;
 
     const categoryIds = document.getElementsByClassName("categoryIds");
@@ -431,10 +438,14 @@ function calculatorTotalPriceInCart() {
 
     //tính giá nhiều sản phẩm cùng loại trong giỏ hàng với số lượng đã chọn (bao gồm thuế riêng, thuế riêng + thuế chung)
     item.priceAfterPrivateTaxes = item.product.priceAfterPrivateTaxes * item.quantity;
+    item.priceAfterPrivateTaxesFormat = formatCurrency(item.priceAfterPrivateTaxes);
     item.priceAfterTaxes = item.product.priceAfterTaxes * item.quantity;
     VARIABLE_PRODUCT.scope.cart.totalBeforeDefaultTax += item.priceAfterPrivateTaxes;
     VARIABLE_PRODUCT.scope.cart.totalAfterTax += item.priceAfterTaxes;
   }
+
+    VARIABLE_PRODUCT.scope.cart.totalBeforeDefaultTaxFormat = formatCurrency(VARIABLE_PRODUCT.scope.cart.totalBeforeDefaultTax);
+    VARIABLE_PRODUCT.scope.cart.totalAfterTaxFormat = formatCurrency(VARIABLE_PRODUCT.scope.cart.totalAfterTax);
 }
 
 function createOrder() {

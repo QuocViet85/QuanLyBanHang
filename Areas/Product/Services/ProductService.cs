@@ -1,9 +1,9 @@
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using WebBanHang.Areas.Category.Model;
-using WebBanHang.Areas.DynamicAttribute.Model;
+using WebBanHang.Areas.Product.Controllers;
 using WebBanHang.Areas.Product.Model;
 using WebBanHang.Areas.Product.ViewModel;
-using WebBanHang.Areas.Tax.Model;
 using WebBanHang.Data;
 
 namespace WebBanHang.Areas.Product.Services;
@@ -16,27 +16,38 @@ public class ProductService : IProductService
     {
         _dbContext = dbContext;
     }
-    public async Task<(List<ProductVM> productVMs, int totalProducts)> GetProducts(int pageNumber, int limit, string userId)
+    public async Task<(List<ProductVM> productVMs, int totalProducts)> GetProducts(int pageNumber, int limit, string userId, string searchByName, string searchByCode, string searchByCategory)
     {
+        IQueryable<ProductModel> queryProduct;
         List<ProductModel> products;
         if (pageNumber > 0 && limit > 0)
         {
-            products = await _dbContext.Products.Where(p => p.UserId == userId)
-                                                .Include(p => p.CategoryProducts)
-                                                .Include(p => p.AttributeProducts)
-                                                .Include(p => p.TaxProducts)
+            queryProduct = _dbContext.Products.Where(p => p.UserId == userId)
                                                 .Skip((pageNumber - 1) * limit)
-                                                .Take(limit)
-                                                .ToListAsync();
+                                                .Take(limit);
         }
         else
         {
-            products = await _dbContext.Products.Where(p => p.UserId == userId)
-                                                .Include(p => p.CategoryProducts)
-                                                .Include(p => p.AttributeProducts)
-                                                .Include(p => p.TaxProducts)
-                                                .ToListAsync();
+            queryProduct = _dbContext.Products.Where(p => p.UserId == userId)
+                                                .Include(p => p.Category);
         }
+
+        if (!string.IsNullOrEmpty(searchByName))
+        {
+            queryProduct = queryProduct.Where(p => p.Name.Contains(searchByName));
+        }
+
+        if (!string.IsNullOrEmpty(searchByCode))
+        {
+            queryProduct = queryProduct.Where(p => p.Code.Contains(searchByCode));
+        }
+
+        if (!string.IsNullOrEmpty(searchByCategory))
+        {
+            queryProduct = queryProduct.Where(p => p.Category.Name.Contains(searchByCategory));
+        }
+
+        products = await queryProduct.ToListAsync();
 
         int totalProducts = await _dbContext.Products.CountAsync();
 
@@ -52,47 +63,49 @@ public class ProductService : IProductService
 
     public async Task Create(ProductVM productVM, string userId)
     {
-        var productModel = new ProductModel()
+        bool existCode = await _dbContext.Products.AnyAsync(p => p.Code == productVM.Code && p.UserId == userId);
+        if (existCode)
         {
-            Name = productVM.Name,
-            Description = productVM.Description,
-            Quantity = productVM.Quantity,
-            UserId = userId,
-            Price = productVM.Price,
-            Discount = productVM.Discount,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now
-        };
+            throw new Exception("Đã có sản phẩm có mã code này");
+        }
+
+        bool existSerial = await _dbContext.Products.AnyAsync(p => p.Serial == productVM.Serial && p.UserId == userId);
+        if (existSerial)
+        {
+            throw new Exception("Đã có sản phẩm có số serial này");
+        }
+
+        var productModel = CreateOrUpdateProductModelFromProductVM(productVM, userId);
 
         await _dbContext.Products.AddAsync(productModel);
         await _dbContext.SaveChangesAsync();
 
-
-        await SetCategoryProducts(productModel.Id, productVM.CategoryIds);
-        await SetPrivateTax(productModel.Id, productVM.PrivateTaxIds);
-        await SetDynamicAttributeValue(productModel.Id, productVM.DynamicAttributes);
     }
 
     public async Task Update(int id, ProductVM productVM, string userId)
     {
         ProductModel productUpdate = await _dbContext.Products.Where(p => p.Id == id && p.UserId == userId).FirstOrDefaultAsync();
-
         if (productUpdate != null)
         {
-            productUpdate.Name = productVM.Name;
-            productUpdate.Description = productVM.Description;
-            productUpdate.Quantity = productVM.Quantity;
-            productUpdate.Price = productVM.Price;
-            productUpdate.Discount = productVM.Discount;
-            productUpdate.UpdatedAt = DateTime.Now;
+            bool existCode = await _dbContext.Products.AnyAsync(p => p.Code == productVM.Code && p.Id != productUpdate.Id && p.UserId == userId);
+            if (existCode)
+            {
+                throw new Exception("Đã có sản phẩm có mã code này");
+            }
+
+            bool existSerial = await _dbContext.Products.AnyAsync(p => p.Serial == productVM.Serial && p.Id != productUpdate.Id && p.UserId == userId);
+            if (existSerial)
+            {
+                throw new Exception("Đã có sản phẩm có số serial này");
+            }
+            CreateOrUpdateProductModelFromProductVM(productVM, userId, productUpdate);
 
             _dbContext.Products.Update(productUpdate);
             int result = await _dbContext.SaveChangesAsync();
-
-            await SetCategoryProducts(productUpdate.Id, productVM.CategoryIds);
-            await SetPrivateTax(productUpdate.Id, productVM.PrivateTaxIds);
-            await SetDynamicAttributeValue(productUpdate.Id, productVM.DynamicAttributes);
-
+        }
+        else
+        {
+            throw new Exception("Không tìm thấy sản phẩm");
         }
     }
 
@@ -101,21 +114,13 @@ public class ProductService : IProductService
         ProductModel productDelete = await _dbContext.Products.Where(p => p.Id == id && p.UserId == userId).FirstOrDefaultAsync();
         if (productDelete != null)
         {
-            await DeleteRelations(productDelete.Id);
             _dbContext.Products.Remove(productDelete);
             await _dbContext.SaveChangesAsync();
         }
         else
         {
-            throw new Exception();
+            throw new Exception("Không tìm thấy sản phẩm");
         }
-    }
-
-    public async Task DeleteRelations(int id)
-    {
-        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM CategoryProducts WHERE ProductId = {0}", id);
-        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM DynamicAttributeValues WHERE ProductId = {0}", id);
-        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM TaxProducts WHERE ProductId = {0}", id);
     }
 
     public ProductVM GetProductVMFromProductModel(ProductModel product)
@@ -123,103 +128,62 @@ public class ProductService : IProductService
         var productVM = new ProductVM();
         productVM.Id = product.Id;
         productVM.Name = product.Name;
+        productVM.Code = product.Code;
+        productVM.Serial = product.Serial;
+        productVM.Unit = product.Unit;
         productVM.Description = product.Description;
         productVM.Quantity = product.Quantity;
-        productVM.Price = product.Price;
+        productVM.PriceImport = product.PriceImport;
+        productVM.PriceWholesale = product.PriceWholesale;
+        productVM.PriceRetail = product.PriceWholesale;
+        productVM.InventoryStandard = product.InventoryStandard;
         productVM.Discount = product.Discount;
-        productVM.CreatedAt = product.CreatedAt.ToString("dd-MM-yyyy");
-        productVM.UpdatedAt = product.UpdatedAt.ToString("dd-MM-yyyy");
-
-        if (product.CategoryProducts != null)
-        {
-            foreach (var categoryProduct in product.CategoryProducts)
-            {
-                productVM.CategoryIds.Add(categoryProduct.CategoryId);
-            }
-        }
-
-        if (product.AttributeProducts != null)
-        {
-            foreach (var attributeProduct in product.AttributeProducts)
-            {
-                productVM.DynamicAttributes.Add(attributeProduct.AttributeId, attributeProduct.Content);
-            }
-        }
-
-        if (product.TaxProducts != null)
-        {
-            foreach (var taxProduct in product.TaxProducts)
-            {
-                productVM.PrivateTaxIds.Add(taxProduct.TaxId);
-            }
-        }
+        productVM.CategoryId = product.CategoryId;
 
         return productVM;
     }
 
-    public async Task SetDynamicAttributeValue(int productId, Dictionary<int, string> dynamicAttributes)
+    public ProductModel CreateOrUpdateProductModelFromProductVM(ProductVM productVM, string userId, ProductModel productUpdate = null)
     {
-        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM DynamicAttributeValues WHERE ProductId = {0}", productId);
-
-        if (dynamicAttributes != null)
+        if (productUpdate == null)
         {
-            var attributeIds = dynamicAttributes.Keys;
+            var product = new ProductModel();
 
-            foreach (var attributeId in attributeIds)
-            {
-                //attributeValue == null thì Product không có Attribute và Attribute không có Value nào tương ứng với Product => Không đưa dữ liệu vào database để không bị thừa dữ liệu
-                if (!string.IsNullOrEmpty(dynamicAttributes[attributeId]))
-                {
-                    var attributeAndValues = new DynamicAttributeValueModel()
-                    {
-                        Content = dynamicAttributes[attributeId],
-                        ProductId = productId,
-                        AttributeId = attributeId
-                    };
-                    await _dbContext.AttributeValues.AddAsync(attributeAndValues);
-                }
-            }
-            await _dbContext.SaveChangesAsync();
+            product.Name = productVM.Name;
+            product.Code = productVM.Code;
+            product.Serial = productVM.Serial;
+            product.Unit = productVM.Unit;
+            product.Description = productVM.Description;
+            product.Quantity = productVM.Quantity;
+            product.PriceImport = productVM.PriceImport;
+            product.PriceWholesale = productVM.PriceWholesale;
+            product.PriceRetail = productVM.PriceWholesale;
+            product.InventoryStandard = productVM.InventoryStandard;
+            product.Discount = productVM.Discount;
+            product.CategoryId = productVM.CategoryId;
+            product.UserId = userId;
+            product.CreatedAt = DateTime.Now;
+            product.UpdatedAt = DateTime.Now;
+
+            return product;
         }
-    }
-
-    public async Task SetCategoryProducts(int productId, List<int> categoryIds)
-    {
-        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM CategoryProducts WHERE ProductId = {0}", productId);
-
-        if (categoryIds != null)
+        else
         {
-            foreach (var categoryId in categoryIds)
-            {
-                var categoryProduct = new CategoryProductModel()
-                {
-                    ProductId = productId,
-                    CategoryId = categoryId
-                };
+            productUpdate.Name = productVM.Name;
+            productUpdate.Code = productVM.Code;
+            productUpdate.Serial = productVM.Serial;
+            productUpdate.Unit = productVM.Unit;
+            productUpdate.Description = productVM.Description;
+            productUpdate.Quantity = productVM.Quantity;
+            productUpdate.PriceImport = productVM.PriceImport;
+            productUpdate.PriceWholesale = productVM.PriceWholesale;
+            productUpdate.PriceRetail = productVM.PriceWholesale;
+            productUpdate.InventoryStandard = productVM.InventoryStandard;
+            productUpdate.Discount = productVM.Discount;
+            productUpdate.CategoryId = productVM.CategoryId;
+            productUpdate.UpdatedAt = DateTime.Now;
 
-                await _dbContext.CategoryProducts.AddAsync(categoryProduct);
-            }
-            await _dbContext.SaveChangesAsync();
-        }
-    }
-
-    public async Task SetPrivateTax(int productId, List<int> taxIds)
-    {
-        await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM TaxProducts WHERE ProductId = {0}", productId);
-
-        if (taxIds != null)
-        {
-            foreach (var taxId in taxIds)
-            {
-                var taxProduct = new TaxProductModel()
-                {
-                    ProductId = productId,
-                    TaxId = taxId
-                };
-
-                await _dbContext.TaxProducts.AddAsync(taxProduct);
-            }
-            await _dbContext.SaveChangesAsync();
+            return productUpdate;
         }
     }
 }

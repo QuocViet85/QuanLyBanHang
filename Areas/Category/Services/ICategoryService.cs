@@ -14,4 +14,6 @@ public interface ICategoryService
     public Task Delete(int id, string userId);
 
     public CategoryVM GetCategoryVMFromCategoryModel(CategoryModel category);
+
+    public CategoryModel CreateOrUpdateCategoryModelFromCategoryVM(CategoryVM categoryVM, string userId, CategoryModel categoryUpdate = null);
 }

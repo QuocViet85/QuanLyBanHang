@@ -9,24 +9,26 @@ namespace WebBanHang.Areas.Product.Controllers;
 
 [Area("Product")]
 [Route("api/product")]
-[Authorize]
+// [Authorize]
 public class ProductController : Controller
 {
     private readonly IProductService _productService;
     private readonly UserManager<IdentityUser> _userManager;
+
+    public string userDemo = "da1c87e4-0df8-4000-8bac-79b48d2082c4";
     public ProductController(UserManager<IdentityUser> userManager, IProductService productService)
     {
         _productService = productService;
         _userManager = userManager;
     }
 
-    public async Task<IActionResult> Index(int pageNumber, int limit)
+    public async Task<IActionResult> Index(int pageNumber, int limit, string searchByName, string searchByCode, string searchByCategory)
     {
         try
         {
-            var user = await _userManager.GetUserAsync(User);
+            //var user = await _userManager.GetUserAsync(User);
 
-            var result = await _productService.GetProducts(pageNumber, limit, user.Id);
+            var result = await _productService.GetProducts(pageNumber, limit, userDemo, searchByName, searchByCode, searchByCategory);
             return Ok(new
             {
                 products = result.productVMs,
@@ -34,7 +36,7 @@ public class ProductController : Controller
             });
         }
         catch
-        { return BadRequest("Lấy sản phẩm thất bại"); }
+        { throw; }
     }
 
     [HttpPost("create")]
@@ -44,9 +46,9 @@ public class ProductController : Controller
         {
             if (ModelState.IsValid)
             {
-                var user = await _userManager.GetUserAsync(User);
+                //var user = await _userManager.GetUserAsync(User);
 
-                await _productService.Create(productVM, user.Id);
+                await _productService.Create(productVM, userDemo);
 
                 return Ok("Tạo sản phẩm thành công");
             }
@@ -55,7 +57,7 @@ public class ProductController : Controller
                 return BadRequest("Thông tin nhập vào không hợp lệ");
             }
         }
-        catch { return BadRequest("Tạo sản phẩm thất bại"); }
+        catch { throw; }
 
     }
 
@@ -66,9 +68,9 @@ public class ProductController : Controller
         {
             if (ModelState.IsValid)
             {
-                var user = await _userManager.GetUserAsync(User);
+                //var user = await _userManager.GetUserAsync(User);
 
-                await _productService.Update(id, productVM, user.Id);
+                await _productService.Update(id, productVM, userDemo);
 
                 return Ok("Cập nhật sản phẩm thành công");
             }
@@ -78,7 +80,7 @@ public class ProductController : Controller
             }
 
         }
-        catch { return BadRequest("Cập nhật sản phẩm thất bại"); }
+        catch { throw; }
     }
 
     [HttpPost("delete/{id}")]
@@ -86,11 +88,11 @@ public class ProductController : Controller
     {
         try
         {
-            var user = await _userManager.GetUserAsync(User);
-            await _productService.Delete(id, user.Id);
+            //var user = await _userManager.GetUserAsync(User);
+            await _productService.Delete(id, userDemo);
         }
         catch { return BadRequest("Xóa sản phẩm thất bại"); }
-        return Ok();
+        return Ok("Xóa sản phẩm thành công");
     }
 }
 
