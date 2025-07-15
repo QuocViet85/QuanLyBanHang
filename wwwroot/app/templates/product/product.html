@@ -31,7 +31,7 @@
   <tbody>
     <tr ng-repeat="(key, item) in products">
       <th scope="row">{{ key + 1 }}</th>
-      <td><input type="checkbox" class="checkboxProduct" ng-attr-id="product-{{ item.id }}" onchange="setProductCheck(this)"></td>
+      <td><input type="checkbox" class="checkboxProduct" ng-attr-id="item-{{ item.id }}" onchange="setProductCheck(this)"></td>
       <td><a ng-click="openPopupUpdate(item)" class="btn btn-warning btn-sm" href="">Sửa</a></td>
       <td>{{ item.categoryName }}</td>
       <td>{{ item.code }}</td>

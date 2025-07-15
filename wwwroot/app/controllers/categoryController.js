@@ -10,6 +10,16 @@ app.controller("categoryController", [
     $scope.categories = [];
     $scope.categoryNow = null;
 
+    $scope.categoryIdChecks = [];
+
+    $scope.searchByName = '';
+
+    $scope.message = {}
+    $scope.message.success = false;
+    $scope.message.error = false;
+
+    $scope.fetchCategories = fetchCategories;
+    
     handlePaginateCategory();
     fetchCategories();
 
@@ -42,9 +52,17 @@ function handlePaginateCategory(totalCategories) {
 }
 
 function fetchCategories() {
-  VARIABLE_CATEGORY.http.get(`api/category?pageNumber=${VARIABLE_CATEGORY.scope.paginate.pageNumber}&limit=${VARIABLE_CATEGORY.scope.paginate.limit}`).then(function (res) {
+  VARIABLE_CATEGORY.http.get(`api/category?pageNumber=${VARIABLE_CATEGORY.scope.paginate.pageNumber}&limit=${VARIABLE_CATEGORY.scope.paginate.limit}&searchByName=${VARIABLE_CATEGORY.scope.searchByName}`).then(function (res) {
+
+    console.log(`api/category?pageNumber=${VARIABLE_CATEGORY.scope.paginate.pageNumber}&limit=${VARIABLE_CATEGORY.scope.paginate.limit}&searchByName=${VARIABLE_CATEGORY.scope.searchByName}`)
+    if (!res.data.categories) {
+      throw "Không tìm thấy danh mục sản phẩm";
+    }
     VARIABLE_CATEGORY.scope.categories = res.data.categories;
     handlePaginateCategory(+res.data.totalCategories);
+  })
+  .catch(err => {
+    showMessage(VARIABLE_CATEGORY.scope, err, false);
   });
 }
 
@@ -65,6 +83,8 @@ function setTemplatePopupCategory() {
     window.location.origin + "/app/templates/category/showUpdate.html";
     VARIABLE_CATEGORY.scope.templateDelete =
     window.location.origin + "/app/templates/category/showDelete.html";
+    VARIABLE_CATEGORY.scope.templateMessage = 
+    window.location.origin + "/app/templates/showMessage.html";
 }
 
 function handlePopupDescriptionCategory() {
@@ -97,13 +117,17 @@ function handlePopupCreateCategory() {
 }
 
 function createCategory() {
-  console.log('CREATE CATEGORY');
   const category = {};
-  category.Name = document.getElementById("name").value;
-  category.Description = document.getElementById("description").value;
+  category.Name = document.getElementById("nameCategory").value;
+  category.Code = document.getElementById('codeCategory').value;
+  category.Description = document.getElementById("descriptionCategory").value;
 
   VARIABLE_CATEGORY.http.post("api/category/create", category).then((res) => {
     fetchCategories();
+    showMessage(VARIABLE_CATEGORY.scope, res.data, true);
+  })
+  .catch(err => {
+    showMessage(VARIABLE_CATEGORY.scope, err.data, false);
   });
 }
 
@@ -124,12 +148,17 @@ function handlePopupUpdateCategory() {
 }
 
 function updateCategory() {
-    const category = VARIABLE_CATEGORY.scope.categoryNow;
-    category.Name = document.getElementById("name").value;
-    category.Description = document.getElementById("description").value;
+    const category = {}
+    category.Name = document.getElementById("nameCategory").value;
+    category.Code = document.getElementById('codeCategory').value;
+    category.Description = document.getElementById("descriptionCategory").value;
 
-    VARIABLE_CATEGORY.http.post(`api/category/update/${category.id}`, category).then((res) => {
+    VARIABLE_CATEGORY.http.post(`api/category/update/${VARIABLE_CATEGORY.scope.categoryNow.id}`, category).then((res) => {
       fetchCategories();
+      showMessage(VARIABLE_CATEGORY.scope, res.data, true);
+    })
+    .catch(err => {
+      showMessage(VARIABLE_CATEGORY.scope, err.data, false);
     });
 }
 
@@ -150,7 +179,42 @@ function handlePopupDeleteCategory() {
 }
 
 function deleteCategory() {
-    VARIABLE_CATEGORY.http.post(`api/category/delete/${VARIABLE_CATEGORY.scope.categoryNow.id}`).then((res) => {
+    VARIABLE_CATEGORY.http.post(`api/category/delete`, VARIABLE_CATEGORY.scope.categoryIdChecks).then((res) => {
       fetchCategories();
+      showMessage(VARIABLE_CATEGORY.scope, res.data, true);
+    })
+    .catch(err => {
+      showMessage(VARIABLE_CATEGORY.scope, err.data, false);
     });
+}
+
+function checkAllCategories() {
+  const checkBoxAllCategory = document.getElementById('checkBoxAllCategory');
+
+  const checkBoxCategories = document.getElementsByClassName('checkboxCategory');
+
+  VARIABLE_CATEGORY.scope.categoryIdChecks = [];
+
+  if (checkBoxAllCategory.checked) {
+      for (const checkBoxCategory of checkBoxCategories) {
+      checkBoxCategory.checked = checkBoxAllCategory.checked;
+      VARIABLE_CATEGORY.scope.categoryIdChecks.push(parseInt(checkBoxCategory.id.slice('5')));
+    }
+  }else {
+    for (const checkBoxCategory of checkBoxCategories) {
+      checkBoxCategory.checked = checkBoxAllCategory.checked;
+    }
+  }
+}
+
+function setCategoryCheck(element) {
+  const categoryId = parseInt(element.id.slice('5'));
+  if (element.checked) {
+    VARIABLE_CATEGORY.scope.categoryIdChecks.push(categoryId);
+  }else {
+    const index = VARIABLE_CATEGORY.scope.categoryIdChecks.indexOf(categoryId);
+    if (index !== -1) {
+      VARIABLE_CATEGORY.scope.categoryIdChecks.splice(index);
+    }
+  }
 }

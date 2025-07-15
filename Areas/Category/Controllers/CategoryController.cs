@@ -8,13 +8,12 @@ namespace WebBanHang.Areas.Category.Controllers;
 
 [Area("Category")]
 [Route("api/category")]
-// [Authorize]
+[Authorize]
 public class CategoryController : Controller
 {
     private readonly ICategoryService _categoryService;
     private readonly UserManager<IdentityUser> _userManager;
 
-    public string userDemo = "da1c87e4-0df8-4000-8bac-79b48d2082c4";
 
     public CategoryController(ICategoryService categoryService, UserManager<IdentityUser> userManager)
     {
@@ -22,20 +21,20 @@ public class CategoryController : Controller
         _userManager = userManager;
     }
 
-    public async Task<IActionResult> Index(int pageNumber, int limit)
+    public async Task<IActionResult> Index(int pageNumber, int limit, string searchByName)
     {
         try
         {
             var user = await _userManager.GetUserAsync(User);
 
-            var result = await _categoryService.GetCategories(pageNumber, limit, userDemo);
+            var result = await _categoryService.GetCategories(pageNumber, limit, user.Id, searchByName);
             return Ok(new
             {
                 categories = result.categoryVMs,
                 totalCategories = result.totalCategories
             });
         }
-        catch { throw new Exception("Lấy danh mục sản phẩm thất bại"); }
+        catch { throw; }
     }
 
     [HttpPost("create")]
@@ -45,9 +44,9 @@ public class CategoryController : Controller
         {
             if (ModelState.IsValid)
             {
-                //var user = await _userManager.GetUserAsync(User);
+                var user = await _userManager.GetUserAsync(User);
 
-                await _categoryService.Create(categoryVM, userDemo);
+                await _categoryService.Create(categoryVM, user.Id);
 
                 return Ok("Tạo danh mục sản phẩm thành công");
             }
@@ -56,7 +55,7 @@ public class CategoryController : Controller
                 return BadRequest("Thông tin nhập vào không hợp lệ");
             }
         }
-        catch { return BadRequest("Tạo danh mục sản phẩm thất bại"); }
+        catch { throw; }
     }
 
     [HttpPost("update/{id}")]
@@ -66,9 +65,9 @@ public class CategoryController : Controller
         {
             if (ModelState.IsValid)
             {
-                //var user = await _userManager.GetUserAsync(User);
+                var user = await _userManager.GetUserAsync(User);
 
-                await _categoryService.Update(id, categoryVM, userDemo);
+                await _categoryService.Update(id, categoryVM, user.Id);
 
                 return Ok("Cập nhật danh mục sản phẩm thành công");
             }
@@ -81,17 +80,17 @@ public class CategoryController : Controller
         catch { throw; }
     }
 
-    [HttpPost("delete/{id}")]
-    public async Task<IActionResult> Delete(int id)
+    [HttpPost("delete")]
+    public async Task<IActionResult> Delete([FromBody] int[] ids)
     {
         try
         {
-            //var user = await _userManager.GetUserAsync(User);
+            var user = await _userManager.GetUserAsync(User);
 
-            await _categoryService.Delete(id, userDemo);
+            await _categoryService.Delete(ids, user.Id);
 
             return Ok("Xóa danh mục sản phẩm thành công");
         }
-        catch { return BadRequest("Xóa danh mục sản phẩm thất bại"); }
+        catch { throw; }
     }
 }

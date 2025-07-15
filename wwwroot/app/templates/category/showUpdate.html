@@ -1,18 +1,21 @@
 <div class="overlay" ng-if="showPopupUpdate">
   <div class="popup">
-    <h3>Sửa danh mục sản phẩm</h3>
-    <table>
+    <h4>Sửa danh mục sản phẩm</h4>
+    <table style="border-spacing: 10px; border-collapse: separate;">
         <tr>
-            <td>Tên: </td>
-            <td><input type="text" id="name" value="{{ categoryNow.name }}"></td>
+            <td style="text-align: left;">Tên: </td>
+            <td><input type="text" class="form-control" id="nameCategory" value="{{ categoryNow.name }}"></td>
+
+            <td style="text-align: left;">Mã: </td>
+            <td><input type="text" class="form-control" id="codeCategory" value="{{ categoryNow.code }}"></td>
         </tr>
         <tr>
-            <td>Mô tả: </td>
-            <td><textarea id="description">{{ categoryNow.description }}</textarea></td>
+            <td style="text-align: left;">Mô tả: </td>
+            <td colspan="2"><input class="form-control" type="text" id="descriptionCategory" value="{{ categoryNow.description }}"></td>
         </tr>
     </table>
 
-    <button ng-click="updateCategory()" class="btn btn-warning">Sửa danh mục</button>
-    <button class="btn btn-danger" ng-click="closePopupUpdate()">Đóng</button>
+    <button ng-click="updateCategory()" class="btn btn-warning btn-sm">Sửa danh mục</button>
+    <button class="btn btn-danger btn-sm" ng-click="closePopupUpdate()">Đóng</button>
   </div>
 </div>

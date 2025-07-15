@@ -1,18 +1,21 @@
 <div class="overlay" ng-if="showPopupCreate">
   <div class="popup">
-    <h3>Tạo danh mục sản phẩm</h3>
-    <table>
+    <h4>Tạo danh mục sản phẩm</h4>
+    <table style="border-spacing: 10px; border-collapse: separate;">
         <tr>
-            <td>Tên: </td>
-            <td><input type="text" id="name"></td>
+            <td style="text-align: left;">Tên: </td>
+            <td><input type="text" class="form-control" id="nameCategory"></td>
+
+            <td style="text-align: left;">Mã: </td>
+            <td><input type="text" class="form-control" id="codeCategory"></td>
         </tr>
         <tr>
-            <td>Mô tả: </td>
-            <td><textarea id="description"></textarea></td>
+            <td style="text-align: left;">Mô tả: </td>
+            <td colspan="2"><input class="form-control" type="text" id="descriptionCategory"></td>
         </tr>
     </table>
 
-    <button ng-click="createCategory()" class="btn btn-primary">Tạo</button>
-    <button class="btn btn-danger" ng-click="closePopupCreate()">Đóng</button>
+    <button ng-click="createCategory()" class="btn btn-primary btn-sm">Tạo</button>
+    <button class="btn btn-danger btn-sm" ng-click="closePopupCreate()">Đóng</button>
   </div>
 </div>

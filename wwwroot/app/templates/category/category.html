@@ -1,13 +1,19 @@
 <h2>Danh sách danh mục sản phẩm</h2>
-<button type="button" class="btn btn-primary text-left" ng-click="openPopupCreate()">Tạo danh mục</button>
+<div style="float: left;">
+  <button type="button" class="btn btn-primary btn-sm" ng-click="openPopupCreate()">Thêm</button> 
+  <button type="button" class="btn btn-danger btn-sm" ng-click="openPopupDelete()">Xóa</button> 
+  <input ng-model="searchByName" ng-change="fetchCategories()" type="text" placeholder="Tìm theo tên" style="height: 25px;">
+</div>
 
 <table class="table">
   <thead>
     <tr>
       <th scope="col">Stt</th>
+      <th><input type="checkbox" id="checkBoxAllCategory" onchange="checkAllCategories()"></th>
+      <th scope="col"></th>
       <th scope="col">Tên</th>
-      <th scope="col">Ngày thêm</th>
-      <th scope="col">Ngày sửa</th>
+      <th scope="col">Mã</th>
+      <th scope="col">Mô tả</th>
       <th scope="col"></th>
       <th scope="col"></th>
       <th scope="col"></th>
@@ -16,15 +22,19 @@
   <tbody>
     <tr ng-repeat="(key, item) in categories">
       <th scope="row">{{ key + 1 }}</th>
-      <td>{{ item.name }}</td>
-      <td>{{ item.createdAt }}</td>
-      <td>{{ item.updatedAt }}</td>
-      <td><button ng-click="openPopupDescription(item)" class="btn btn-info btn-sm" href="">Xem mô tả</button></td>
+      <td><input type="checkbox" class="checkboxCategory" ng-attr-id="item-{{ item.id }}" onchange="setCategoryCheck(this)"></td>
       <td><a ng-click="openPopupUpdate(item)" class="btn btn-warning btn-sm" href="">Sửa</a></td>
-      <td><a ng-click="openPopupDelete(item)" class="btn btn-danger btn-sm" href="">Xóa</a></td>
+      <td>{{ item.name }}</td>
+      <td>{{ item.code }}</td>
+      <td><button ng-click="openPopupDescription(item)" class="btn btn-info btn-sm" href="">Xem mô tả</button></td>
     </tr>
   </tbody>
 </table>
+    <div style="float: left;">
+      <label for="">Số lượng hiện: </label>
+      <input type="number" ng-model="paginate.limit" ng-change="fetchCategories()" style="width: 60px;">
+    </div>
+
     <button ng-click="paginate.minusPageNumber()" class="btn btn-dark btn-sm">Lùi</button>
     <input id="pageNumber" style="width: 50px;" type="number" ng-model="paginate.pageNumber"></input> / {{ paginate.totalPages }}
     <button ng-click="paginate.plusPageNumber()" class="btn btn-dark btn-sm">Tiến</button>
@@ -36,3 +46,5 @@
 <div ng-include="templateUpdate"></div>
 
 <div ng-include="templateDelete"></div>
+
+<div ng-include="templateMessage"></div>

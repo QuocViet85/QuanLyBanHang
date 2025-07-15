@@ -14,21 +14,27 @@ public class CategoryService : ICategoryService
         _dbContext = dbContext;
     }
 
-    public async Task<(List<CategoryVM> categoryVMs, int totalCategories)> GetCategories(int pageNumber, int limit, string userId)
+    public async Task<(List<CategoryVM> categoryVMs, int totalCategories)> GetCategories(int pageNumber, int limit, string userId, string searchByName)
     {
         List<CategoryModel> categories;
 
+        IQueryable<CategoryModel> queryCategories = _dbContext.Categories.Where(c => c.UserId == userId);
+
         if (pageNumber > 0 && limit > 0)
         {
-            categories = await _dbContext.Categories.Where(c => c.UserId == userId)
-                                                    .Skip((pageNumber - 1) * limit)
-                                                    .Take(limit)
-                                                    .ToListAsync();
+            queryCategories = queryCategories.Skip((pageNumber - 1) * limit).Take(limit);
         }
-        else
+        else if (limit < 0)
         {
-            categories = await _dbContext.Categories.Where(c => c.UserId == userId).ToListAsync();
+            throw new Exception("Lỗi phân trang");
         }
+
+        if (!string.IsNullOrEmpty(searchByName))
+        {
+            queryCategories = queryCategories.Where(c => c.Name.Contains(searchByName));
+        }
+
+        categories = await queryCategories.ToListAsync();
 
         int totalCategories = await _dbContext.Categories.CountAsync();
 
@@ -80,17 +86,22 @@ public class CategoryService : ICategoryService
         }
     }
 
-    public async Task Delete(int id, string userId)
+    public async Task Delete(int[] ids, string userId)
     {
-        CategoryModel categoryDelete = await _dbContext.Categories.Where(c => c.Id == id && c.UserId == userId).FirstOrDefaultAsync();
-        if (categoryDelete != null)
+        if (ids != null)
         {
-            _dbContext.Categories.Remove(categoryDelete);
-            int result = await _dbContext.SaveChangesAsync();
+            foreach (var id in ids)
+            {
+                bool exist = await _dbContext.Products.AnyAsync(p => p.Id == id && p.UserId == userId);
+                if (exist)
+                {
+                    await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM Categories WHERE id = {0}", id);
+                }
+            }
         }
         else
         {
-            throw new Exception("Không tìm thấy danh mục sản phẩm");
+            throw new Exception("Chưa chọn sản phẩm để xóa");
         }
     }
 

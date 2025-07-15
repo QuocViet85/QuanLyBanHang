@@ -91,7 +91,6 @@ function setUnits() {
 
 }
 
-
 function handlePopupProduct() {
   setTemplatePopupProduct();
   handlePopupDescriptionProduct();
@@ -289,7 +288,7 @@ function checkAllProducts() {
   if (checkBoxAllProduct.checked) {
       for (const checkBoxProduct of checkBoxProducts) {
       checkBoxProduct.checked = checkBoxAllProduct.checked;
-      VARIABLE_PRODUCT.scope.productIdChecks.push(parseInt(checkBoxProduct.id.slice('8')));
+      VARIABLE_PRODUCT.scope.productIdChecks.push(parseInt(checkBoxProduct.id.slice('5')));
     }
   }else {
     for (const checkBoxProduct of checkBoxProducts) {
@@ -299,7 +298,7 @@ function checkAllProducts() {
 }
 
 function setProductCheck(element) {
-  const productId = parseInt(element.id.slice('8'));
+  const productId = parseInt(element.id.slice('5'));
   if (element.checked) {
     VARIABLE_PRODUCT.scope.productIdChecks.push(productId);
   }else {
