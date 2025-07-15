@@ -8,20 +8,22 @@ app.controller("productController", [
     $scope.products = [];
     $scope.productNow = null;
     $scope.categories = [];
-    $scope.taxes = [];
-    $scope.defaultTaxes = [];
-    $scope.privateTaxes = [];
-    $scope.dynamicAttributes = [];
-    $scope.customers = [];
+    $scope.productIdChecks = [];
+    $scope.fetchProducts = fetchProducts;
 
-    $scope.cart = []; //giỏ hàng
+    $scope.searchByName = '';
+    $scope.searchByCode = '';
+    $scope.searchByCategory = '';
+    $scope.searchByUnit = '';
+
+    $scope.message = {}
+    $scope.message.success = false;
+    $scope.message.error = false;
 
     handlePaginateProduct();
+    setUnits();
     fetchProducts();
     fetchAllCategories();
-    fetchAllTaxes();
-    fetAllDynamicAttributes();
-    fetchAllCustomer();
 
     handlePopupProduct();
   },
@@ -52,13 +54,21 @@ function handlePaginateProduct(totalProducts) {
 }
 
 function fetchProducts() {
-  VARIABLE_PRODUCT.http.get(`api/product?pageNumber=${VARIABLE_PRODUCT.scope.paginate.pageNumber}&limit=${VARIABLE_PRODUCT.scope.paginate.limit}`).then(function (res) {
+  VARIABLE_PRODUCT.http.get(`api/product?pageNumber=${VARIABLE_PRODUCT.scope.paginate.pageNumber}&limit=${VARIABLE_PRODUCT.scope.paginate.limit}&searchByName=${VARIABLE_PRODUCT.scope.searchByName}&searchByCode=${VARIABLE_PRODUCT.scope.searchByCode}&searchByCategory=${VARIABLE_PRODUCT.scope.searchByCategory}&searchByUnit=${VARIABLE_PRODUCT.scope.searchByUnit}`).then(function (res) {
+    if (!res.data.products) {
+      throw "Không tìm thấy sản phẩm";
+    }
     VARIABLE_PRODUCT.scope.products = res.data.products;
     handlePaginateProduct(+res.data.totalProducts);
 
     for (var product of VARIABLE_PRODUCT.scope.products) {
-      product.priceFormat = formatCurrency(product.price);
+      product.priceImportShow = formatCurrency(product.priceImport);
+      product.priceWholesaleShow = formatCurrency(product.priceWholesale);
+      product.priceRetailShow = formatCurrency(product.priceRetail);
     }
+  })
+  .catch(err => {
+    showMessage(VARIABLE_PRODUCT.scope, err, false);
   });
 }
 
@@ -68,65 +78,42 @@ function fetchAllCategories() {
   });
 }
 
-function fetAllDynamicAttributes() {
-  VARIABLE_PRODUCT.http.get("api/dynamicattribute").then(function (res) {
-    VARIABLE_PRODUCT.scope.dynamicAttributes = res.data.dynamicAttributes;
-  });
+function setUnits() {
+  VARIABLE_PRODUCT.scope.units = {
+    1: 'Bao',
+    2: 'Bộ',
+    3: 'Cái',
+    4: 'Cây',
+    5: 'Chiếc',
+    6: 'Lon',
+    7: 'Thùng'
+  };
+
 }
 
-function fetchAllTaxes() {
-  VARIABLE_PRODUCT.http.get("api/tax/active").then(function (res) {
-    VARIABLE_PRODUCT.scope.taxes = res.data;
-    if (VARIABLE_PRODUCT.scope.taxes) {
-      for (const tax of VARIABLE_PRODUCT.scope.taxes) {
-        if (tax.isDefault) {
-          VARIABLE_PRODUCT.scope.defaultTaxes.push(tax);
-        }else {
-          VARIABLE_PRODUCT.scope.privateTaxes.push(tax);
-        }
-      }
-    }
-  });
-}
-
-function fetchAllCustomer() {
-  VARIABLE_PRODUCT.http.get("api/customer").then(function (res) {
-    VARIABLE_PRODUCT.scope.customers = res.data.customers;
-  })
-}
 
 function handlePopupProduct() {
   setTemplatePopupProduct();
   handlePopupDescriptionProduct();
-  handlePopup_DynamicAttribute();
-  handlePopup_Category();
-  handlePopup_Tax();
   handlePopupCreateProduct();
   handlePopupUpdateProduct();
   handlePopupDeleteProduct();
-  handlePopupSellProduct();
-  handlePopupCartProduct();
+  handlePopupActiveProduct();
 }
 
 function setTemplatePopupProduct() {
   VARIABLE_PRODUCT.scope.templateDescription =
     window.location.origin + "/app/templates/product/showDescription.html";
-  VARIABLE_PRODUCT.scope.templateCategory =
-    window.location.origin + "/app/templates/product/showCategory.html";
-  VARIABLE_PRODUCT.scope.templateDynamicAttribute =
-    window.location.origin + "/app/templates/product/showDynamicAttribute.html";
-  VARIABLE_PRODUCT.scope.templateTax =
-    window.location.origin + "/app/templates/product/showTax.html";
   VARIABLE_PRODUCT.scope.templateCreate =
     window.location.origin + "/app/templates/product/showCreate.html";
   VARIABLE_PRODUCT.scope.templateUpdate =
     window.location.origin + "/app/templates/product/showUpdate.html";
   VARIABLE_PRODUCT.scope.templateDelete =
     window.location.origin + "/app/templates/product/showDelete.html";
-  VARIABLE_PRODUCT.scope.templateSell =
-  window.location.origin + "/app/templates/product/showSell.html";
-  VARIABLE_PRODUCT.scope.templateCart =
-  window.location.origin + "/app/templates/product/showCart.html";
+    VARIABLE_PRODUCT.scope.templateActive =
+    window.location.origin + "/app/templates/product/showActive.html";
+    VARIABLE_PRODUCT.scope.templateMessage = 
+    window.location.origin + "/app/templates/showMessage.html";
 }
 
 function handlePopupDescriptionProduct() {
@@ -143,92 +130,14 @@ function handlePopupDescriptionProduct() {
   };
 }
 
-function handlePopup_DynamicAttribute() {
-  VARIABLE_PRODUCT.scope.dynamicAttributes = null;
-  VARIABLE_PRODUCT.scope.showPopupDynamicAttribute = false;
-
-  VARIABLE_PRODUCT.scope.openPopupDynamicAttribute = function (productNow) {
-    VARIABLE_PRODUCT.scope.productNow = productNow;
-    VARIABLE_PRODUCT.scope.showPopupDynamicAttribute = true;
-  };
-
-  VARIABLE_PRODUCT.scope.closePopupDynamicAttribute = function () {
-    VARIABLE_PRODUCT.scope.dynamicAttributes = null;
-    VARIABLE_PRODUCT.scope.showPopupDynamicAttribute = false;
-  };
-}
-
-function handlePopup_Category() {
-  VARIABLE_PRODUCT.scope.showPopupCategory = false;
-  VARIABLE_PRODUCT.scope.productNow = null;
-
-  VARIABLE_PRODUCT.scope.openPopupCategory = function (productNow) {
-    VARIABLE_PRODUCT.scope.productNow = productNow;
-    VARIABLE_PRODUCT.scope.showPopupCategory = true;
-  };
-
-  VARIABLE_PRODUCT.scope.closePopupCategory = function () {
-    VARIABLE_PRODUCT.scope.showPopupCategory = false;
-    VARIABLE_PRODUCT.scope.productNow = null;
-  };
-}
-
-function handlePopup_Tax() {
-  VARIABLE_PRODUCT.scope.showPopupTax = false;
-  VARIABLE_PRODUCT.scope.productNow = null;
-
-  VARIABLE_PRODUCT.scope.openPopupTax = function (productNow) {
-    VARIABLE_PRODUCT.scope.productNow = productNow;
-    calculatePriceAfterTax(VARIABLE_PRODUCT.scope.productNow);
-    VARIABLE_PRODUCT.scope.showPopupTax = true;
-  };
-
-  VARIABLE_PRODUCT.scope.closePopupTax = function () {
-    VARIABLE_PRODUCT.scope.productNow = null;
-    VARIABLE_PRODUCT.scope.showPopupTax = false;
-  };
-}
-
-function calculatePriceAfterTax(productNow) {
-  productNow.privateTaxes = [];
-  var realPrice = productNow.price;
-  if (productNow.discount) {
-    realPrice -= productNow.price * productNow.discount;
-  }
-
-  productNow.priceAfterPrivateTaxes = realPrice;
-  
-  if (VARIABLE_PRODUCT.scope.privateTaxes) {
-    for (const tax of VARIABLE_PRODUCT.scope.privateTaxes) {
-      if (productNow.privateTaxIds.includes(tax.id)) {
-        productNow.privateTaxes.push(tax);
-        productNow.priceAfterPrivateTaxes *= (1 + tax.rate);
-      }
-    }
-  }
-
-  productNow.priceAfterPrivateTaxes = Math.round(productNow.priceAfterPrivateTaxes);
-
-  productNow.priceAfterTaxes = productNow.priceAfterPrivateTaxes;
-
-  if (VARIABLE_PRODUCT.scope.defaultTaxes) {
-    for (const tax of VARIABLE_PRODUCT.scope.defaultTaxes) {
-      productNow.priceAfterTaxes *= (1 + tax.rate);
-    }
-  }
-
-  productNow.priceAfterTaxes = Math.round(productNow.priceAfterTaxes);
-  productNow.priceAfterTaxesFormat = formatCurrency(productNow.priceAfterTaxes);
-}
-
 function handlePopupCreateProduct() {
   VARIABLE_PRODUCT.scope.showPopupCreate = false;
 
   VARIABLE_PRODUCT.scope.createProduct = createProduct;
 
   VARIABLE_PRODUCT.scope.openPopupCreate = function () {
+    setFormatNumberInput();
     VARIABLE_PRODUCT.scope.showPopupCreate = true;
-    formatCurrencyInput('priceShow', 'price');
   };
 
   VARIABLE_PRODUCT.scope.closePopupCreate = function () {
@@ -236,48 +145,34 @@ function handlePopupCreateProduct() {
   };
 }
 
+
 function createProduct() {
   const product = {};
-  product.Name = document.getElementById("name").value;
-  product.Quantity = document.getElementById("quantity").value;
-  product.Price = document.getElementById("price").value;
-  product.Discount = document.getElementById("discount").value / 100;
-  product.Description = document.getElementById("description").value;
+  product.Name = document.getElementById("nameProduct").value;
+  product.Code = document.getElementById("codeProduct").value;
+  product.Serial = document.getElementById("serialProduct").value;
+  product.PriceImport = document.getElementById("priceImportProduct").value;
+  product.PriceWholesale = document.getElementById("priceWholesaleProduct").value;
+  product.PriceRetail = document.getElementById("priceRetailProduct").value;
+  product.Unit = document.getElementById("unitProduct").value;
+  product.InventoryStandard = document.getElementById("inventoryStandardProduct").value;
+  product.Description = document.getElementById("descriptionProduct").value;
+  product.IsActive = document.getElementById("isActiveProduct").checked;
 
-  const categoryIds = document.getElementsByClassName("categoryIds");
-  if (categoryIds) {
-    product.CategoryIds = [];
-    for (const categoryId of categoryIds) {
-      if (categoryId.checked) {
-        product.CategoryIds.push(categoryId.value);
-      }
-    }
-  }
+  const categoryIdProduct = document.getElementById("categoryIdProduct");
 
-  const privateTaxIds = document.getElementsByClassName("privateTaxIds");
-  if (privateTaxIds) {
-    product.PrivateTaxIds = [];
-    for (const taxId of privateTaxIds) {
-      if (taxId.checked) {
-        product.PrivateTaxIds.push(taxId.value);
-      }
-    }
-  }
-
-  const dynamicAttributes =
-    document.getElementsByClassName("dynamicAttributes");
-  if (dynamicAttributes) {
-    product.DynamicAttributes = {};
-    for (const dynamicAttribute of dynamicAttributes) {
-      if (dynamicAttribute.value) {
-        product.DynamicAttributes[dynamicAttribute.id.slice(2)] =
-          dynamicAttribute.value;
-      }
+  if (categoryIdProduct) {
+    if (categoryIdProduct.value) {
+      product.CategoryId = categoryIdProduct.value;
     }
   }
 
   VARIABLE_PRODUCT.http.post("api/product/create", product).then((res) => {
     fetchProducts();
+    showMessage(VARIABLE_PRODUCT.scope, res.data, true);
+  })
+  .catch(err => {
+    showMessage(VARIABLE_PRODUCT.scope, err.data, false)
   });
 }
 
@@ -289,7 +184,7 @@ function handlePopupUpdateProduct() {
   VARIABLE_PRODUCT.scope.openPopupUpdate = function (productNow) {
     VARIABLE_PRODUCT.scope.productNow = productNow;
     VARIABLE_PRODUCT.scope.showPopupUpdate = true;
-    formatCurrencyInput('priceShow', 'price');
+    setFormatNumberInput();
   };
 
   VARIABLE_PRODUCT.scope.closePopupUpdate = function () {
@@ -299,48 +194,40 @@ function handlePopupUpdateProduct() {
 }
 
 function updateProduct() {
-    const product = VARIABLE_PRODUCT.scope.productNow;
-    product.Name = document.getElementById("name").value;
-    product.Quantity = document.getElementById("quantity").value;
-    product.Price = document.getElementById("price").value;
-    product.Discount = document.getElementById("discount").value / 100;
-    product.Description = document.getElementById("description").value;
+    const product = {};
+    product.Name = document.getElementById("nameProduct").value;
+    product.Code = document.getElementById("codeProduct").value;
+    product.Serial = document.getElementById("serialProduct").value;
+    product.PriceImport = document.getElementById("priceImportProduct").value;
+    product.PriceWholesale = document.getElementById("priceWholesaleProduct").value;
+    product.PriceRetail = document.getElementById("priceRetailProduct").value;
+    product.Unit = document.getElementById("unitProduct").value;
+    product.InventoryStandard = document.getElementById("inventoryStandardProduct").value;
+    product.Description = document.getElementById("descriptionProduct").value;
+    product.IsActive = document.getElementById("isActiveProduct").checked;
 
-    const categoryIds = document.getElementsByClassName("categoryIds");
-    if (categoryIds) {
-      product.CategoryIds = [];
-      for (const categoryId of categoryIds) {
-        if (categoryId.checked) {
-          product.CategoryIds.push(categoryId.value);
-        }
+    const categoryIdProduct = document.getElementById("categoryIdProduct");
+
+    if (categoryIdProduct) {
+      if (categoryIdProduct.value) {
+        product.CategoryId = categoryIdProduct.value;
       }
     }
 
-    const privateTaxIds = document.getElementsByClassName("privateTaxIds");
-    if (privateTaxIds) {
-      product.PrivateTaxIds = [];
-      for (const taxId of privateTaxIds) {
-        if (taxId.checked) {
-          product.PrivateTaxIds.push(taxId.value);
-        }
-      }
-    }
-
-    const dynamicAttributes =
-      document.getElementsByClassName("dynamicAttributes");
-    if (dynamicAttributes) {
-      product.DynamicAttributes = {};
-      for (const dynamicAttribute of dynamicAttributes) {
-        if (dynamicAttribute.value) {
-          product.DynamicAttributes[dynamicAttribute.id.slice(2)] =
-            dynamicAttribute.value;
-        }
-      }
-    }
-
-    VARIABLE_PRODUCT.http.post(`api/product/update/${product.id}`, product).then((res) => {
+    VARIABLE_PRODUCT.http.post(`api/product/update/${VARIABLE_PRODUCT.scope.productNow.id}`, product).then((res) => {
       fetchProducts();
+      showMessage(VARIABLE_PRODUCT.scope, res.data, true);
+    })
+    .catch(err => {
+      showMessage(VARIABLE_PRODUCT.scope, err.data, false);
     });
+}
+
+function setFormatNumberInput() {
+    formatNumberInput('priceImportProductShow', 'priceImportProduct');
+    formatNumberInput('priceWholesaleProductShow', 'priceWholesaleProduct');
+    formatNumberInput('priceRetailProductShow', 'priceRetailProduct');
+    formatNumberInput('inventoryStandardProductShow', 'inventoryStandardProduct');
 }
 
 function handlePopupDeleteProduct() {
@@ -348,129 +235,79 @@ function handlePopupDeleteProduct() {
 
   VARIABLE_PRODUCT.scope.deleteProduct = deleteProduct;
 
-  VARIABLE_PRODUCT.scope.openPopupDelete = function (productNow) {
-    VARIABLE_PRODUCT.scope.productNow = productNow;
+  VARIABLE_PRODUCT.scope.openPopupDelete = function () {
     VARIABLE_PRODUCT.scope.showPopupDelete = true;
   };
 
   VARIABLE_PRODUCT.scope.closePopupDelete = function () {
-    VARIABLE_PRODUCT.scope.productNow = null;
     VARIABLE_PRODUCT.scope.showPopupDelete = false;
   };
 }
 
 function deleteProduct() {
-    VARIABLE_PRODUCT.http.post(`api/product/delete/${VARIABLE_PRODUCT.scope.productNow.id}`).then((res) => {
+    VARIABLE_PRODUCT.http.post(`api/product/delete`, VARIABLE_PRODUCT.scope.productIdChecks).then((res) => {
       fetchProducts();
+      showMessage(VARIABLE_PRODUCT.scope, res.data, true);
+    })
+    .catch(err => {
+      showMessage(VARIABLE_PRODUCT.scope, err.data, false);
     });
 }
 
-function handlePopupSellProduct() {
-  VARIABLE_PRODUCT.scope.showPopupSell = false;
+function handlePopupActiveProduct() {
+  VARIABLE_PRODUCT.scope.showPopupActive = false;
 
-  VARIABLE_PRODUCT.scope.pushProductToCart = pushProductToCart;
+  VARIABLE_PRODUCT.scope.activeProduct = activeProduct;
 
-  VARIABLE_PRODUCT.scope.openPopupSell = function (productNow) {
-    VARIABLE_PRODUCT.scope.productNow = productNow;
-    VARIABLE_PRODUCT.scope.showPopupSell = true;
+  VARIABLE_PRODUCT.scope.openPopupActive = function () {
+    VARIABLE_PRODUCT.scope.showPopupActive = true;
   };
 
-  VARIABLE_PRODUCT.scope.closePopupSell = function () {
-    VARIABLE_PRODUCT.scope.productNow = null;
-    VARIABLE_PRODUCT.scope.showPopupSell = false;
+  VARIABLE_PRODUCT.scope.closePopupActive = function () {
+    VARIABLE_PRODUCT.scope.showPopupActive = false;
   };
 }
 
-function pushProductToCart(productNow) {
-  var quantity = document.getElementById("quantityProduct").value;
-  quantity = +quantity;
-
-  if (quantity > 0) {
-    var existInCart = false;
-
-    for (var item of VARIABLE_PRODUCT.scope.cart) {
-      if (productNow === item.product) {
-        existInCart = true;
-
-        if (quantity + item.quantity <= productNow.quantity) {
-          item.quantity = quantity + item.quantity;
-        }
-      }
-    }
-
-    if (!existInCart) {
-      if (quantity <= productNow.quantity) {
-        const productInCart = {
-        product: productNow,
-        quantity: quantity
-        }
-
-        VARIABLE_PRODUCT.scope.cart.push(productInCart);
-      }
-      
-    }
-  }
-  VARIABLE_PRODUCT.scope.closePopupSell();
-}
-
-function handlePopupCartProduct() {
-  VARIABLE_PRODUCT.scope.showPopupCart = false;
-
-  VARIABLE_PRODUCT.scope.createOrder = createOrder;
-  VARIABLE_PRODUCT.scope.deleteCart = deleteCart;
-
-  VARIABLE_PRODUCT.scope.openPopupCart = function () {
-    calculatorTotalPriceInCart();
-    VARIABLE_PRODUCT.scope.showPopupCart = true;
-  };
-
-  VARIABLE_PRODUCT.scope.closePopupCart = function () {
-    VARIABLE_PRODUCT.scope.showPopupCart = false;
-  };
-}
-
-function calculatorTotalPriceInCart() {
-  VARIABLE_PRODUCT.scope.cart.totalBeforeDefaultTax = 0;
-  VARIABLE_PRODUCT.scope.cart.totalAfterTax = 0;
-  for (var item of VARIABLE_PRODUCT.scope.cart) {
-    //tính giá 1 sản phẩm(bao gồm thuế riêng, thuế riêng + thuế chung)
-    calculatePriceAfterTax(item.product); 
-
-    //tính giá nhiều sản phẩm cùng loại trong giỏ hàng với số lượng đã chọn (bao gồm thuế riêng, thuế riêng + thuế chung)
-    item.priceAfterPrivateTaxes = item.product.priceAfterPrivateTaxes * item.quantity;
-    item.priceAfterPrivateTaxesFormat = formatCurrency(item.priceAfterPrivateTaxes);
-    item.priceAfterTaxes = item.product.priceAfterTaxes * item.quantity;
-    VARIABLE_PRODUCT.scope.cart.totalBeforeDefaultTax += item.priceAfterPrivateTaxes;
-    VARIABLE_PRODUCT.scope.cart.totalAfterTax += item.priceAfterTaxes;
-  }
-
-    VARIABLE_PRODUCT.scope.cart.totalBeforeDefaultTaxFormat = formatCurrency(VARIABLE_PRODUCT.scope.cart.totalBeforeDefaultTax);
-    VARIABLE_PRODUCT.scope.cart.totalAfterTaxFormat = formatCurrency(VARIABLE_PRODUCT.scope.cart.totalAfterTax);
-}
-
-function createOrder() {
-  const order = {};
-  order.Name = document.getElementById("orderName").value;
-  order.CustomerName = document.getElementById("customerName").value;
-  order.CustomerPhoneNumber = document.getElementById("customerPhoneNumber").value;
-  order.Completed = document.getElementById("orderCompleted").checked;
-
-  order.ProductInOrders = [];
-  
-  for (var item of VARIABLE_PRODUCT.scope.cart) {
-    order.ProductInOrders.push({
-      ProductId: item.product.id,
-      Quantity: item.quantity
-    });
-  }
-
-  VARIABLE_PRODUCT.http.post("api/order/create", order).then((res) => {
-    if (order.Completed) {
+function activeProduct() {
+    VARIABLE_PRODUCT.http.post(`api/product/active-unactive`, VARIABLE_PRODUCT.scope.productIdChecks).then((res) => {
       fetchProducts();
-    }
-  });
+      document.getElementById('checkBoxAllProduct').checked = false;
+      showMessage(VARIABLE_PRODUCT.scope, res.data, true);
+    })
+    .catch(err => {
+      showMessage(VARIABLE_PRODUCT.scope, err.data, false);
+    });
 }
 
-function deleteCart() {
-  VARIABLE_PRODUCT.scope.cart = [];
+function checkAllProducts() {
+  const checkBoxAllProduct = document.getElementById('checkBoxAllProduct');
+
+  const checkBoxProducts = document.getElementsByClassName('checkboxProduct');
+
+  VARIABLE_PRODUCT.scope.productIdChecks = [];
+
+  if (checkBoxAllProduct.checked) {
+      for (const checkBoxProduct of checkBoxProducts) {
+      checkBoxProduct.checked = checkBoxAllProduct.checked;
+      VARIABLE_PRODUCT.scope.productIdChecks.push(parseInt(checkBoxProduct.id.slice('8')));
+    }
+  }else {
+    for (const checkBoxProduct of checkBoxProducts) {
+      checkBoxProduct.checked = checkBoxAllProduct.checked;
+    }
+  }
 }
+
+function setProductCheck(element) {
+  const productId = parseInt(element.id.slice('8'));
+  if (element.checked) {
+    VARIABLE_PRODUCT.scope.productIdChecks.push(productId);
+  }else {
+    const index = VARIABLE_PRODUCT.scope.productIdChecks.indexOf(productId);
+    if (index !== -1) {
+      VARIABLE_PRODUCT.scope.productIdChecks.splice(index);
+    }
+  }
+}
+
+

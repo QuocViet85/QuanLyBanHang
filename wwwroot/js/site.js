@@ -11,10 +11,12 @@ function formatCurrency(price) {
     return vnFormatter.format(price);
 }
 
-function formatCurrencyInput(idShowInput, idHideInput) {
+function formatNumberInput(idShowInput, idHideInput) {
     setTimeout(() => {
         const showInput = document.getElementById(idShowInput);
         const hideInput = document.getElementById(idHideInput);
+
+        showInput.value = Number(hideInput.value).toLocaleString('en-US');
 
         showInput.addEventListener('input', function(e) {
             let value = e.target.value.replace(/[^0-9]/g, '');

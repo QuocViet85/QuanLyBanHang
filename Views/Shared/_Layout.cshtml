@@ -21,10 +21,6 @@
     <script src="~/app/app.js"></script>
     <script src="~/app/controllers/productController.js"></script>
     <script src="~/app/controllers/categoryController.js"></script>
-    <script src="~/app/controllers/dynamicAttributeController.js"></script>
-    <script src="~/app/controllers/taxController.js"></script>
-    <script src="~/app/controllers/customerController.js"></script>
-    <script src="~/app/controllers/orderController.js"></script>
 </head>
 <body>
     <header>
@@ -46,22 +42,13 @@
                         <li class="nav-item"></li>
                             <a class="nav-link text-dark" href="/category">Danh mục</a>
                         </li>
-                        <li class="nav-item"></li>
-                            <a class="nav-link text-dark" href="/dynamicattribute">Thuộc tính động</a>
-                        </li>
-                        <li class="nav-item"></li>
-                            <a class="nav-link text-dark" href="/order">Hóa đơn</a>
-                        </li>
-                        <li class="nav-item"></li>
-                            <a class="nav-link text-dark" href="/tax">Thuế</a>
-                        </li>
                     </ul>
                     <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
+    <div class="">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>

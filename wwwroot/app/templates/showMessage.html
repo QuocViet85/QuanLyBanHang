@@ -1,0 +1,26 @@
+<style>
+    .message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-size: 16px;
+    color: white;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .success {
+    background-color: #28a745; /* Màu xanh thành công */
+    }
+
+    .error {
+    background-color: #dc3545; /* Màu đỏ lỗi */
+    }
+</style>
+
+<div>
+    <div ng-if="message.success" class="message success">{{ message.success }}</div>
+    <div ng-if="message.error" class="message error">{{ message.error }}</div>
+</div>

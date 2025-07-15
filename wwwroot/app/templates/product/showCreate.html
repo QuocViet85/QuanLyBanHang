@@ -1,53 +1,70 @@
 <div class="overlay" ng-if="showPopupCreate">
   <div class="popup">
-    <h3>Tạo sản phẩm</h3>
-    <table>
+    <h4>Tạo sản phẩm</h4>
+    
+    <table style="border-spacing: 10px; border-collapse: separate;" border="0">
         <tr>
-            <td>Tên: </td>
-            <td><input type="text" id="name"></td>
+            <td style="text-align: left;">Tên: </td>
+            <td><input type="text" class="form-control" id="nameProduct"></td>
+
+            <td style="text-align: left;">Mã: </td>
+            <td><input type="text" class="form-control" id="codeProduct"></td>
+
+            <td style="text-align: left;">Serial: </td>
+            <td><input type="text" class="form-control" id="serialProduct"></td>
         </tr>
+
         <tr>
-            <td>Số lượng: </td>
-            <td><input type="number" id="quantity"></td>
-        </tr>
-        <tr>
-            <td>Giá: </td>
+            <td style="text-align: left;">Giá nhập: </td>
             <td>
-                <input type="text" id="priceShow">
-                <input type="number" id="price" hidden>
+                <input type="text" id="priceImportProductShow" class="form-control">
+                <input type="number" id="priceImportProduct" hidden>
+            </td>
+
+            <td style="text-align: left;">Giá bán buôn: </td>
+            <td>
+                <input type="text" id="priceWholesaleProductShow" class="form-control">
+                <input type="number" id="priceWholesaleProduct" hidden>
+            </td>
+
+            <td style="text-align: left;">Giá bán lẻ: </td>
+            <td>
+                <input type="text" id="priceRetailProductShow" class="form-control">
+                <input type="number" id="priceRetailProduct" hidden>
+            </td>
+        </tr>
+
+        <tr>
+            <td style="text-align: left;">Nhóm: </td>
+            <td>
+                <select id="categoryIdProduct" class="form-control">
+                    <option value=""></option>
+                    <option ng-repeat="item in categories" value="{{ item.id }}">{{ item.name }}</option>
+                </select>
+            </td>
+
+            <td style="text-align: left;">Đơn vị: </td>
+            <td>
+                <select id="unitProduct" class="form-control">
+                    <option ng-repeat="(key, item) in units" value="{{ item }}">{{ item }}</option>
+                </select>
+            </td>
+
+            <td style="text-align: left;">Tồn định mức: </td>
+            <td>
+                <input type="text" id="inventoryStandardProductShow" class="form-control"></input>
+                <input type="number" id="inventoryStandardProduct" hidden>
             </td>
         </tr>
         <tr>
-            <td>Giảm giá (%): </td>
-            <td><input type="number" id="discount"></td>
-        </tr>
-        <tr>
-            <td>Mô tả: </td>
-            <td><textarea id="description"></textarea></td>
-        </tr>
-        <tr ng-repeat="attribute in dynamicAttributes">
-            <td>{{ attribute.name }}</td>
-            <td>
-                <input type="text" id="dA{{ attribute.id }}" class="dynamicAttributes">
+            <td style="text-align: left;">Mô tả: </td>
+            <td colspan="2">
+                <textarea type="text" id="descriptionProduct" class="form-control"></textarea>
             </td>
         </tr>
         <tr>
-            <td>Danh mục:</td>
-            <td>
-                <span ng-repeat="category in categories">
-                    <label for="">{{ category.name }}</label>
-                    <input class="categoryIds" type="checkbox" value="{{ category.id }}"/> |
-                </span>
-            </td>
-        </tr>
-        <tr>
-            <td>Thuế:</td>
-            <td>
-                <span ng-repeat="tax in taxes" ng-if="!tax.isDefault">
-                    <label for="">{{ tax.name }}</label>
-                    <input class="privateTaxIds" type="checkbox" value="{{ tax.id }}"/> |
-                </span>
-            </td>
+            <td style="text-align: left;">Đang sử dụng: </td>
+            <td><input type="checkbox" id="isActiveProduct" class="form-check" checked></td>
         </tr>
     </table>
 

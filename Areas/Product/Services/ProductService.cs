@@ -16,20 +16,17 @@ public class ProductService : IProductService
     {
         _dbContext = dbContext;
     }
-    public async Task<(List<ProductVM> productVMs, int totalProducts)> GetProducts(int pageNumber, int limit, string userId, string searchByName, string searchByCode, string searchByCategory)
+    public async Task<(List<ProductVM> productVMs, int totalProducts)> GetProducts(int pageNumber, int limit, string userId, string searchByName, string searchByCode, string searchByCategory, string searchByUnit)
     {
-        IQueryable<ProductModel> queryProduct;
+        IQueryable<ProductModel> queryProduct = _dbContext.Products.Where(p => p.UserId == userId).Include(p => p.Category);
         List<ProductModel> products;
         if (pageNumber > 0 && limit > 0)
         {
-            queryProduct = _dbContext.Products.Where(p => p.UserId == userId)
-                                                .Skip((pageNumber - 1) * limit)
-                                                .Take(limit);
+            queryProduct = queryProduct.Skip((pageNumber - 1) * limit).Take(limit);
         }
-        else
+        else if (limit < 0)
         {
-            queryProduct = _dbContext.Products.Where(p => p.UserId == userId)
-                                                .Include(p => p.Category);
+            throw new Exception("Lỗi phân trang, không thể giới hạn số trang là số âm"); 
         }
 
         if (!string.IsNullOrEmpty(searchByName))
@@ -42,9 +39,14 @@ public class ProductService : IProductService
             queryProduct = queryProduct.Where(p => p.Code.Contains(searchByCode));
         }
 
+        if (!string.IsNullOrEmpty(searchByUnit))
+        {
+            queryProduct = queryProduct.Where(p => p.Unit.Contains(searchByUnit));
+        }
+
         if (!string.IsNullOrEmpty(searchByCategory))
         {
-            queryProduct = queryProduct.Where(p => p.Category.Name.Contains(searchByCategory));
+            queryProduct = queryProduct.Where(p => p != null && EF.Functions.Like(p.Category.Name, $"%{searchByCategory}%"));
         }
 
         products = await queryProduct.ToListAsync();
@@ -109,17 +111,41 @@ public class ProductService : IProductService
         }
     }
 
-    public async Task Delete(int id, string userId)
+    public async Task Delete(int[] ids, string userId)
     {
-        ProductModel productDelete = await _dbContext.Products.Where(p => p.Id == id && p.UserId == userId).FirstOrDefaultAsync();
-        if (productDelete != null)
+        if (ids != null)
         {
-            _dbContext.Products.Remove(productDelete);
+            foreach (var id in ids)
+            {
+                bool exist = await _dbContext.Products.AnyAsync(p => p.Id == id && p.UserId == userId);
+                if (exist)
+                {
+                    await _dbContext.Database.ExecuteSqlRawAsync("DELETE FROM Products WHERE id = {0}", id);
+                }
+            }
+        }
+        else
+        {
+            throw new Exception("Chưa chọn sản phẩm để xóa");
+        }
+    }
+
+    public async Task ActiveOrUnactive(int[] ids, string userId)
+    {
+        if (ids != null)
+        {
+            var products = await _dbContext.Products.Where(p => ids.Any(id => id == p.Id) && p.UserId == userId).ToListAsync();
+
+            foreach (var product in products)
+            {
+                product.IsActive = !product.IsActive;
+            }
+
             await _dbContext.SaveChangesAsync();
         }
         else
         {
-            throw new Exception("Không tìm thấy sản phẩm");
+            throw new Exception("Chưa chọn sản phẩm để xóa");
         }
     }
 
@@ -139,51 +165,47 @@ public class ProductService : IProductService
         productVM.InventoryStandard = product.InventoryStandard;
         productVM.Discount = product.Discount;
         productVM.CategoryId = product.CategoryId;
+        productVM.IsActive = product.IsActive;
+        if (product.Category != null)
+        {
+            productVM.CategoryName = product.Category.Name;
+        }
+
 
         return productVM;
     }
 
     public ProductModel CreateOrUpdateProductModelFromProductVM(ProductVM productVM, string userId, ProductModel productUpdate = null)
     {
+        ProductModel product;
         if (productUpdate == null)
         {
-            var product = new ProductModel();
+            product = new ProductModel();
 
-            product.Name = productVM.Name;
-            product.Code = productVM.Code;
-            product.Serial = productVM.Serial;
-            product.Unit = productVM.Unit;
-            product.Description = productVM.Description;
-            product.Quantity = productVM.Quantity;
-            product.PriceImport = productVM.PriceImport;
-            product.PriceWholesale = productVM.PriceWholesale;
-            product.PriceRetail = productVM.PriceWholesale;
-            product.InventoryStandard = productVM.InventoryStandard;
-            product.Discount = productVM.Discount;
-            product.CategoryId = productVM.CategoryId;
             product.UserId = userId;
             product.CreatedAt = DateTime.Now;
             product.UpdatedAt = DateTime.Now;
-
-            return product;
         }
         else
         {
-            productUpdate.Name = productVM.Name;
-            productUpdate.Code = productVM.Code;
-            productUpdate.Serial = productVM.Serial;
-            productUpdate.Unit = productVM.Unit;
-            productUpdate.Description = productVM.Description;
-            productUpdate.Quantity = productVM.Quantity;
-            productUpdate.PriceImport = productVM.PriceImport;
-            productUpdate.PriceWholesale = productVM.PriceWholesale;
-            productUpdate.PriceRetail = productVM.PriceWholesale;
-            productUpdate.InventoryStandard = productVM.InventoryStandard;
-            productUpdate.Discount = productVM.Discount;
-            productUpdate.CategoryId = productVM.CategoryId;
+            product = productUpdate;
             productUpdate.UpdatedAt = DateTime.Now;
-
-            return productUpdate;
         }
+
+        product.Name = productVM.Name;
+        product.Code = productVM.Code;
+        product.Serial = productVM.Serial;
+        product.Unit = productVM.Unit;
+        product.Description = productVM.Description;
+        product.Quantity = productVM.Quantity;
+        product.PriceImport = productVM.PriceImport != null ? (int)productVM.PriceImport : 0;
+        product.PriceWholesale = productVM.PriceWholesale != null ? (int)productVM.PriceWholesale : 0;
+        product.PriceRetail = productVM.PriceRetail != null ? (int)productVM.PriceRetail : 0;
+        product.InventoryStandard = productVM.InventoryStandard != null ? (int)productVM.InventoryStandard : 0;
+        product.Discount = productVM.Discount;
+        product.CategoryId = productVM.CategoryId;
+        product.IsActive = productVM.IsActive;
+
+        return product;
     }
 }

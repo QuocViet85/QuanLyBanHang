@@ -14,22 +14,19 @@ app.config(['$routeProvider', function($routeProvider) {
       templateUrl: window.location.origin + '/app/templates/category/category.html',
       controller: 'categoryController'
     })
-    .when('/dynamicattribute', {
-      templateUrl: window.location.origin + '/app/templates/dynamicAttribute/dynamicAttribute.html',
-      controller: 'dynamicAttributeController'
-    })
-    .when('/tax', {
-      templateUrl: window.location.origin + '/app/templates/tax/tax.html',
-      controller: 'taxController'
-    })
-    .when('/customer', {
-      templateUrl: window.location.origin + '/app/templates/customer/customer.html',
-      controller: 'customerController'
-    })
-    .when('/order', {
-      templateUrl: window.location.origin + '/app/templates/order/order.html',
-      controller: 'orderController'
-    })
 }]);
 
 
+function showMessage($scope, message, success = true) {
+  if (success) {
+    $scope.message.success = message;
+  }else {
+    $scope.message.error = message;
+  }
+  setTimeout(() => {
+      $scope.$apply(function() {
+        $scope.message.success = false;
+        $scope.message.error = false;
+    })
+  }, 5000);
+}

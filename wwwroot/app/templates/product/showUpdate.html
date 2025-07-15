@@ -1,54 +1,69 @@
 <div class="overlay" ng-if="showPopupUpdate">
   <div class="popup">
-    <h3>Sửa sản phẩm</h3>
-    <table>
+    <h4>Sửa sản phẩm</h4>
+    <table style="border-spacing: 10px; border-collapse: separate;" border="0">
         <tr>
-            <td>Tên: </td>
-            <td><input type="text" id="name" value="{{ productNow.name }}"></td>
+            <td style="text-align: left;">Tên: </td>
+            <td><input type="text" class="form-control" id="nameProduct" value="{{ productNow.name }}"></td>
+
+            <td style="text-align: left;">Mã: </td>
+            <td><input type="text" class="form-control" id="codeProduct" value="{{ productNow.code }}"></td>
+
+            <td style="text-align: left;">Serial: </td>
+            <td><input type="text" class="form-control" id="serialProduct" value="{{ productNow.serial }}"></td>
         </tr>
+
         <tr>
-            <td>Số lượng: </td>
-            <td><input type="number" id="quantity" value="{{ productNow.quantity }}"></td>
-        </tr>
-        <tr>
-            <td>Giá: </td>
+            <td style="text-align: left;">Giá nhập: </td>
             <td>
-                <input type="text" id="priceShow" value="{{ productNow.priceFormat }}">
-                <input type="number" id="price" hidden value="{{ productNow.price }}">
+                <input type="text" class="form-control" id="priceImportProductShow">
+                <input type="number" hidden id="priceImportProduct" value="{{ productNow.priceImport }}">
             </td>
-            <!-- Dùng value không dùng ng-model để trong trường hợp không ấn sửa và tắt đi bật lại popup thì vẫn hiển thị giá trị ban đầu đúng với server -->
-        </tr>
-        <tr>
-            <td>Giảm giá (%): </td>
-            <td><input type="number" id="discount" value="{{ productNow.discount * 100 }}"></td>
-        </tr>
-        <tr>
-            <td>Mô tả: </td>
-            <td><textarea id="description">{{ productNow.description }}</textarea></td>
-        </tr>
-        <tr ng-repeat="attribute in dynamicAttributes">
-            <td>{{ attribute.name }}</td>
+
+            <td style="text-align: left;">Giá bán buôn: </td>
             <td>
-                <input type="text" id="dA{{ attribute.id }}" class="dynamicAttributes" value="{{ productNow.dynamicAttributes[attribute.id] }}">
+                <input type="text" class="form-control" id="priceWholesaleProductShow">
+                <input type="number" hidden id="priceWholesaleProduct" value="{{ productNow.priceWholesale }}">
             </td>
-        </tr>
-        <tr>
-            <td>Danh mục:</td>
+
+            <td style="text-align: left;">Giá bán lẻ: </td>
             <td>
-                <span ng-repeat="category in categories">
-                    <label for="">{{ category.name }}</label>
-                    <input class="categoryIds" type="checkbox" value="{{ category.id }}" ng-checked="productNow.categoryIds.includes(category.id)" /> |
-                </span>
+                <input type="text" class="form-control" id="priceRetailProductShow">
+                <input type="number" hidden id="priceRetailProduct" value="{{ productNow.priceRetail }}">
             </td>
         </tr>
+
         <tr>
-            <td>Thuế:</td>
+            <td style="text-align: left;">Nhóm: </td>
             <td>
-                <span ng-repeat="tax in taxes" ng-if="!tax.isDefault">
-                    <label for="">{{ tax.name }}</label>
-                    <input class="privateTaxIds" type="checkbox" value="{{ tax.id }}" ng-checked="productNow.privateTaxIds.includes(tax.id)"/> |
-                </span>
+                <select id="categoryIdProduct" class="form-control">
+                    <option value=""></option>
+                    <option ng-repeat="item in categories" ng-selected="item.id === productNow.categoryId" value="{{ item.id }}">{{ item.name }}</option>
+                </select>
             </td>
+
+            <td style="text-align: left;">Đơn vị: </td>
+            <td>
+                <select id="unitProduct" class="form-control">
+                    <option ng-repeat="(key, item) in units" ng-selected="item === productNow.unit" value="{{ item }}">{{ item }}</option>
+                </select>
+            </td>
+
+            <td style="text-align: left;">Tồn định mức: </td>
+            <td>
+                <input type="text" class="form-control" id="inventoryStandardProductShow"></input>
+                <input type="number" id="inventoryStandardProduct" value="{{ productNow.inventoryStandard }}" hidden>
+            </td>
+        </tr>
+        <tr>
+            <td style="text-align: left;">Mô tả: </td>
+            <td colspan="2">
+                <textarea type="text" id="descriptionProduct" class="form-control">{{ productNow.description }}</textarea>
+            </td>
+        </tr>
+        <tr>
+            <td style="text-align: left;">Đang sử dụng: </td>
+            <td><input type="checkbox" id="isActiveProduct" class="form-check" checked></td>
         </tr>
     </table>
 

@@ -1,0 +1,11 @@
+<div class="overlay" ng-if="showPopupActive">
+  <div class="popup">
+    <div ng-if="productIdChecks.length > 0">
+      <h4>Xác nhận thay đổi sử dụng/không sử dụng của các sản phẩm đã chọn</h4>
+      <button class="btn btn-success" ng-click="activeProduct()">Thay đổi</button>
+    </div>
+    
+    <h4 ng-if="productIdChecks.length <= 0">Chọn sản phẩm để xử lý</h4>
+    <button class="btn btn-danger" ng-click="closePopupActive()">Đóng</button>
+  </div>
+</div>

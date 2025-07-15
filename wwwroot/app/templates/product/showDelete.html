@@ -1,8 +1,11 @@
 <div class="overlay" ng-if="showPopupDelete">
   <div class="popup">
-    <h3>Xác nhận xóa sản phẩm</h3>
-    <p>{{ productNow.name }}</p>
-    <button class="btn btn-danger" ng-click="deleteProduct()">Xóa</button>
+    <div ng-if="productIdChecks.length > 0">
+      <h4>Xác nhận xóa các sản phẩm đã chọn</h4>
+      <button class="btn btn-danger" ng-click="deleteProduct()">Xóa</button>
+    </div>
+    <h4 ng-if="productIdChecks.length <= 0">Chọn sản phẩm để xử lý</h4>
+    
     <button class="btn btn-danger" ng-click="closePopupDelete()">Đóng</button>
   </div>
 </div>

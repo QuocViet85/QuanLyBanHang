@@ -20,6 +20,8 @@ public class ProductModel
     public string? Description { set; get; }
     public int? Quantity { set; get; }
 
+    public bool IsActive { set; get; } = true;
+
     //giá nhập
     [Precision(18, 2)]
     public decimal PriceImport { set; get; }
@@ -36,7 +38,7 @@ public class ProductModel
     public int InventoryStandard { set; get; }
 
     [Precision(18, 2)]
-    public decimal Discount { set; get; } = 0;
+    public decimal? Discount { set; get; }
     public string UserId { set; get; }
 
     [ForeignKey("UserId")]

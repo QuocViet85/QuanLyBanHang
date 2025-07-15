@@ -1,42 +1,56 @@
 <h2>Danh sách sản phẩm</h2>
-<button type="button" class="btn btn-primary text-left" ng-click="openPopupCreate()">Tạo sản phẩm</button>
-<button type="button" class="btn btn-light" ng-click="openPopupCart()">Giỏ hàng</button>
+<div style="float: left;">
+  <button type="button" class="btn btn-primary btn-sm" ng-click="openPopupCreate()">Thêm</button> 
+  <button type="button" class="btn btn-danger btn-sm" ng-click="openPopupDelete()">Xóa</button> 
+  <button type="button" class="btn btn-success btn-sm" ng-click="openPopupActive()">Sử dụng / Không sử dụng</button>
+  <input ng-model="searchByCategory" ng-change="fetchProducts()" type="text" placeholder="Tìm theo nhóm" style="height: 25px;"> 
+  <input ng-model="searchByCode" ng-change="fetchProducts()" type="text" placeholder="Tìm theo mã" style="height: 25px;" />
+  <input ng-model="searchByName" ng-change="fetchProducts()" type="text" placeholder="Tìm theo tên" style="height: 25px;">
+  <input ng-model="searchByUnit" ng-change="fetchProducts()" type="text" placeholder="Tìm theo đơn vị" style="height: 25px;">
+</div>
+
 
 <table class="table">
   <thead>
     <tr>
       <th scope="col">Stt</th>
+      <td scope="col"><input type="checkbox" id="checkBoxAllProduct" onchange="checkAllProducts()"></td>
+      <td scope="col"></td>
+      <th scope="col">Nhóm</th>
+      <th scope="col">Mã</th>
       <th scope="col">Tên</th>
-      <th scope="col">Số lượng</th>
-      <th scope="col">Giá</th>
-      <th scope="col">Giảm giá</th>
-      <th scope="col"></th>
-      <th scope="col"></th>
-      <th scope="col"></th>
-      <th scope="col"></th>
-      <th scope="col"></th>
-      <th scope="col"></th>
+      <th scope="col">Đơn vị</th>
+      <th scope="col">Giá nhập <br></th>
+      <th scope="col">Giá buôn</th>
+      <th scope="col">Giá lẻ</th>
+      <th scope="col">Tồn</th>
+      <th scope="col">Trạng thái</th>
+      <th scope="col">Mô tả</th>
     </tr>
   </thead>
   <tbody>
     <tr ng-repeat="(key, item) in products">
       <th scope="row">{{ key + 1 }}</th>
-      <td>{{ item.name }}</td>
-      <td>{{ item.quantity }}</td>
-      <td>{{ item.priceFormat }}</td>
-      <td>{{ item.discount * 100 }}%</td>
-      <td><button ng-click="openPopupDescription(item)" class="btn btn-info btn-sm" href="">Xem mô tả</button></td>
-      <td><button ng-click="openPopupDynamicAttribute(item)" class="btn btn-dark btn-sm" href="">Các thuộc tính động</button></td>
-      <td><a ng-click="openPopupCategory(item)" class="btn btn-primary btn-sm" href="">Danh mục</a></td>
-      <td><a ng-click="openPopupTax(item)" class="btn btn-success btn-sm" href="">Thuế</a></td>
-      <td><a ng-click="openPopupSell(item)" class="btn btn-light btn-sm" href="">Bán</a></td>
+      <td><input type="checkbox" class="checkboxProduct" ng-attr-id="product-{{ item.id }}" onchange="setProductCheck(this)"></td>
       <td><a ng-click="openPopupUpdate(item)" class="btn btn-warning btn-sm" href="">Sửa</a></td>
-      <td><a ng-click="openPopupDelete(item)" class="btn btn-danger btn-sm" href="">Xóa</a></td>
+      <td>{{ item.categoryName }}</td>
+      <td>{{ item.code }}</td>
+      <td>{{ item.name }}</td>
+      <td>{{ item.unit }}</td>
+      <td>{{ item.priceImportShow }}</td>
+      <td>{{ item.priceWholesaleShow }}</td>
+      <td>{{ item.priceRetailShow }}</td>
+      <td>{{ item.quantity }}</td>
+      <td>{{ item.isActive ? "Đang sử dụng" : "Không sử dụng" }}</td>
+      <td><a ng-click="openPopupDescription(item)" class="btn btn-info">Xem mô tả</a></td>
     </tr>
   </tbody>
 </table>
 
-
+    <div style="float: left;">
+      <label for="">Số lượng hiện: </label>
+      <input type="number" ng-model="paginate.limit" ng-change="fetchProducts()" style="width: 60px;">
+    </div>
     <button ng-click="paginate.minusPageNumber()" class="btn btn-dark btn-sm">Lùi</button>
     <input id="pageNumber" style="width: 50px;" type="number" ng-model="paginate.pageNumber"></input> / {{ paginate.totalPages }}
     <button ng-click="paginate.plusPageNumber()" class="btn btn-dark btn-sm">Tiến</button>
@@ -44,18 +58,14 @@
 
 <div ng-include="templateDescription"></div>
 
-<div ng-include="templateDynamicAttribute"></div>
-
-<div ng-include="templateCategory"></div>
-
-<div ng-include="templateTax"></div>
-
 <div ng-include="templateCreate"></div>
 
 <div ng-include="templateUpdate"></div>
 
 <div ng-include="templateDelete"></div>
 
-<div ng-include="templateSell"></div>
+<div ng-include="templateActive"></div>
 
-<div ng-include="templateCart"></div>
+<div ng-include="templateMessage"></div>
+
+
