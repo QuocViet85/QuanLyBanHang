@@ -3,6 +3,7 @@
   <button type="button" class="btn btn-primary btn-sm" ng-click="openPopupCreate()">Thêm</button> 
   <button type="button" class="btn btn-danger btn-sm" ng-click="openPopupDelete()">Xóa</button> 
   <button type="button" class="btn btn-success btn-sm" ng-click="openPopupActive()">Sử dụng / Không sử dụng</button>
+  <button type="button" class="btn btn-secondary btn-sm" ng-click="openPopupPrint()">In</button>
   <input ng-model="searchByCategory" ng-change="fetchProducts()" type="text" placeholder="Tìm theo nhóm" style="height: 25px;"> 
   <input ng-model="searchByCode" ng-change="fetchProducts()" type="text" placeholder="Tìm theo mã" style="height: 25px;" />
   <input ng-model="searchByName" ng-change="fetchProducts()" type="text" placeholder="Tìm theo tên" style="height: 25px;">
@@ -10,7 +11,7 @@
 </div>
 
 
-<table class="table">
+<table class="table" id="tableProducts">
   <thead>
     <tr>
       <th scope="col">Stt</th>

@@ -18,4 +18,6 @@ public interface IProductService
     public ProductVM GetProductVMFromProductModel(ProductModel product);
 
     public ProductModel CreateOrUpdateProductModelFromProductVM(ProductVM productVM, string userId, ProductModel productUpdate = null);
+
+    public Task HandleUploadFile(int productId, ProductVM productVM, string userId);
 }

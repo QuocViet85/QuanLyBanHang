@@ -98,6 +98,7 @@ function handlePopupProduct() {
   handlePopupUpdateProduct();
   handlePopupDeleteProduct();
   handlePopupActiveProduct();
+  handlePopupPrintProduct();
 }
 
 function setTemplatePopupProduct() {
@@ -264,6 +265,41 @@ function handlePopupActiveProduct() {
 
   VARIABLE_PRODUCT.scope.closePopupActive = function () {
     VARIABLE_PRODUCT.scope.showPopupActive = false;
+  };
+}
+
+function handlePopupPrintProduct() {
+  VARIABLE_PRODUCT.scope.openPopupPrint = function () {
+    var date = new Date();
+    var content = `<link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+      <span style="font-size:x-small; float: left;">${date.getHours()}:${date.getMinutes()} ${date.getDay()}/${date.getMonth() + 1}/${date.getFullYear()}</span> <br>
+      <div style="text-align: center;">
+        <h3>Sản phẩm - Hàng hóa</h3>
+      </div>
+      <br>
+      <table border=1>
+        <tr>
+          <td>Stt</td>
+          <th>Nhóm</th>
+          <th>Mã</th>
+          <th>Tên</th>
+          <th>Đơn vị</th>
+          <th>Giá nhập <br></th>
+          <th>Giá buôn</th>
+          <th>Giá lẻ</th>
+          <th>Tồn</th>
+          <th>Trạng thái</th>
+        </tr>
+      `;
+
+    const printWindow = window.open('', '', 'width=800, height=600');
+
+    printWindow.document.writeln(content);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
   };
 }
 

@@ -1,5 +1,9 @@
+using System.Text;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Razor.TagHelpers;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 using WebBanHang.Areas.Category.Model;
 using WebBanHang.Areas.Product.Controllers;
 using WebBanHang.Areas.Product.Model;
@@ -16,6 +20,9 @@ public class ProductService : IProductService
     {
         _dbContext = dbContext;
     }
+
+    private readonly string[] ExtensionFileUploads = { ".jpg", ".jpeg", ".png", ".gif" };
+    private readonly int LimitSize = 5097152;
     public async Task<(List<ProductVM> productVMs, int totalProducts)> GetProducts(int pageNumber, int limit, string userId, string searchByName, string searchByCode, string searchByCategory, string searchByUnit)
     {
         IQueryable<ProductModel> queryProduct = _dbContext.Products.Where(p => p.UserId == userId).Include(p => p.Category);
@@ -26,7 +33,7 @@ public class ProductService : IProductService
         }
         else if (limit < 0)
         {
-            throw new Exception("Lỗi phân trang, không thể giới hạn số trang là số âm"); 
+            throw new Exception("Lỗi phân trang, không thể giới hạn số trang là số âm");
         }
 
         if (!string.IsNullOrEmpty(searchByName))
@@ -82,6 +89,8 @@ public class ProductService : IProductService
         await _dbContext.Products.AddAsync(productModel);
         await _dbContext.SaveChangesAsync();
 
+        await HandleUploadFile(productModel.Id, productVM, userId);
+
     }
 
     public async Task Update(int id, ProductVM productVM, string userId)
@@ -104,6 +113,8 @@ public class ProductService : IProductService
 
             _dbContext.Products.Update(productUpdate);
             int result = await _dbContext.SaveChangesAsync();
+
+            await HandleUploadFile(productUpdate.Id, productVM, userId);
         }
         else
         {
@@ -207,5 +218,69 @@ public class ProductService : IProductService
         product.IsActive = productVM.IsActive;
 
         return product;
+    }
+
+    public async Task HandleUploadFile(int productId, ProductVM productVM, string userId)
+    {
+        if (productVM.File != null)
+        {
+            var extensionFileUpload = Path.GetExtension(productVM.File.FileName);
+
+            if (ExtensionFileUploads.Contains(extensionFileUpload))
+            {
+                if (productVM.File.Length <= LimitSize)
+                {
+                    string fileName = Path.GetFileNameWithoutExtension(Path.GetRandomFileName()) + extensionFileUpload;
+
+                    string pathFile = Path.Combine("wwwroot", "images", "products", fileName);
+
+                    using (FileStream fileStream = new FileStream(pathFile, FileMode.Create))
+                    {
+                        await productVM.File.CopyToAsync(fileStream);
+                    }
+
+                    var productPhoto = new ProductPhotoModel()
+                    {
+                        FileName = fileName,
+                        ProductId = productId
+                    };
+
+                    await _dbContext.ProductPhotos.AddAsync(productPhoto);
+
+                    var productPhotoOlds = await _dbContext.ProductPhotos.Where(pp => pp.ProductId == productId).ToListAsync();
+
+                    if (productPhotoOlds.Count > 0)
+                    {
+                        foreach (var productPhotoOld in productPhotoOlds)
+                        {
+                            string pathOldFile = Path.Combine("wwwroot", "images", "products", productPhotoOld.FileName);
+                            File.Delete(pathOldFile);
+                        }
+
+                        _dbContext.RemoveRange(productPhotoOlds);
+                    }
+
+                    await _dbContext.SaveChangesAsync();
+                }
+                else
+                {
+                    throw new Exception("Tạo sản phẩm thành công nhưng tải ảnh lên thất bại vì dung lượng file quá lớn. Chỉ tải lên file có dung lượng tối đa là 5 MB");
+                }
+            }
+            else
+            {
+                StringBuilder builder = new StringBuilder();
+                builder.Append("Tạo sản phẩm thành công nhưng tải ảnh lên thất bại vì định dạng file không phù hợp. Chỉ upload file có các đuôi sau: ");
+
+                foreach (var extension in ExtensionFileUploads)
+                {
+                    builder.Append($"{extension}, ");
+                }
+
+                string error = builder.ToString();
+
+                throw new Exception(error);
+            }
+        }
     }
 }
